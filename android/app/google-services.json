@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "788530059359",
+    "project_id": "mern-book-inventory-765aa",
+    "storage_bucket": "mern-book-inventory-765aa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:788530059359:android:b4433da8e5e8f0956323ea",
+        "android_client_info": {
+          "package_name": "com.example.boi_paben_project"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "788530059359-f3esjrtoqckr0po1t2dqlvagr6vecnrl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzYrqSDLHpzV4hxxzkFD5-ZfhK-1SGPvU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "788530059359-f3esjrtoqckr0po1t2dqlvagr6vecnrl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

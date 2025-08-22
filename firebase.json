@@ -1,0 +1,29 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "mern-book-inventory-765aa",
+          "appId": "1:788530059359:android:b4433da8e5e8f0956323ea",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "mern-book-inventory-765aa",
+          "configurations": {
+            "android": "1:788530059359:android:b4433da8e5e8f0956323ea",
+            "ios": "1:788530059359:ios:1abae81cbdddd3626323ea",
+            "macos": "1:788530059359:ios:1abae81cbdddd3626323ea",
+            "web": "1:788530059359:web:1596ea7745c09f956323ea",
+            "windows": "1:788530059359:web:b79d7052188172196323ea"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}
