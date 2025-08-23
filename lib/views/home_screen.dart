@@ -5,8 +5,8 @@ import '../models/book_model.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/book_viewmodel.dart';
 import '../utils/app_theme.dart';
-import 'login_screen.dart';
-import 'sell_book_screen.dart';
+import '../utils/routes.dart';
+import '../widgets/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -49,8 +49,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-
     return Scaffold(
       appBar: AppBar(
         leading: Builder(
@@ -128,10 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           );
                         } else {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginScreen()),
-                          );
+                          Navigator.pushNamed(context, AppRoutes.login);
                         }
                       },
                     ),
@@ -139,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.white.withOpacity(0.2),
+                        color: AppColors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -165,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      drawer: _buildDrawer(context, authViewModel),
+      drawer: const AppDrawer(),
       body: Column(
         children: [
           // Search Bar (appears when searching)
@@ -182,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(25),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: Colors.grey.withValues(alpha: 0.2),
                           spreadRadius: 1,
                           blurRadius: 3,
                           offset: Offset(0, 1),
@@ -316,10 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           onPressed: () {
                             final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
                             if (authViewModel.isAuthenticated) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const SellBookScreen()),
-                              );
+                              Navigator.pushNamed(context, AppRoutes.sellBook);
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -327,10 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   backgroundColor: AppColors.red,
                                 ),
                               );
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                              );
+                              Navigator.pushNamed(context, AppRoutes.login);
                             }
                           },
                           style: OutlinedButton.styleFrom(
@@ -543,82 +532,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Drawer _buildDrawer(BuildContext context, AuthViewModel authViewModel) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(
-              color: AppColors.primaryOrange,
-            ),
-            child: Text(
-              'Menu',
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.sell_outlined),
-            title: Text('Sell Your Books', style: GoogleFonts.poppins()),
-            onTap: () {
-              Navigator.pop(context);
-              if (authViewModel.isAuthenticated) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SellBookScreen()),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please log in to sell books.'),
-                    backgroundColor: AppColors.red,
-                  ),
-                );
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.shopping_bag_outlined),
-            title: Text('My Purchases', style: GoogleFonts.poppins()),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.favorite_outline),
-            title: Text('Wishlist', style: GoogleFonts.poppins()),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.settings_outlined),
-            title: Text('Settings', style: GoogleFonts.poppins()),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.help_outline),
-            title: Text('Help & Support', style: GoogleFonts.poppins()),
-            onTap: () {
-              Navigator.pop(context);
-            },
           ),
         ],
       ),

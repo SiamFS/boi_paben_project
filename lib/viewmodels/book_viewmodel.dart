@@ -12,7 +12,6 @@ class BookViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // Remove automatic fetching from constructor
   BookViewModel();
 
   Future<void> fetchBooks() async {
@@ -25,8 +24,7 @@ class BookViewModel extends ChangeNotifier {
       _errorMessage = null;
     } catch (e) {
       _errorMessage = e.toString();
-      _books = []; // Clear books on error
-      print('Error in BookViewModel.fetchBooks: $e');
+      _books = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -40,11 +38,48 @@ class BookViewModel extends ChangeNotifier {
 
     try {
       await _bookService.uploadBook(book);
-      await fetchBooks(); // Refresh the book list after uploading
+      await fetchBooks();
       _errorMessage = null;
     } catch (e) {
       _errorMessage = e.toString();
-      print('Error in BookViewModel.uploadBook: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteBook(String? bookId) async {
+    if (bookId == null) throw Exception('Book ID is null');
+    
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _bookService.deleteBook(bookId);
+      await fetchBooks(); 
+      _errorMessage = null;
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateBook(Book book) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _bookService.updateBook(book);
+      await fetchBooks(); 
+      _errorMessage = null;
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();

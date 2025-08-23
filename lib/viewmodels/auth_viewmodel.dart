@@ -11,7 +11,6 @@ class AuthViewModel extends ChangeNotifier {
   String? _errorMessage;
   bool _isInitialized = false;
   
-  // User address fields for auto-fill
   String? _savedStreetAddress;
   String? _savedCityTown;
   String? _savedDistrict;
@@ -24,8 +23,7 @@ class AuthViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _user != null;
   bool get isInitialized => _isInitialized;
-  
-  // Auto-fill getters
+
   String? get savedStreetAddress => _savedStreetAddress;
   String? get savedCityTown => _savedCityTown;
   String? get savedDistrict => _savedDistrict;
@@ -64,7 +62,6 @@ class AuthViewModel extends ChangeNotifier {
           password: savedPassword,
         );
       } catch (e) {
-        // If auto-login fails, clear saved credentials
         await _clearSavedCredentials();
       }
     }
@@ -130,7 +127,6 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Sign up with email and password
   Future<bool> signUp({
     required String email,
     required String password,
@@ -147,7 +143,6 @@ class AuthViewModel extends ChangeNotifier {
       );
 
       if (_user != null) {
-        // Save credentials for auto-login
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_email', email);
         await prefs.setString('user_password', password);
@@ -162,7 +157,6 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  // Sign in with email and password
   Future<bool> signIn({
     required String email,
     required String password,
@@ -177,7 +171,6 @@ class AuthViewModel extends ChangeNotifier {
       );
 
       if (_user != null) {
-        // Save credentials for auto-login
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user_email', email);
         await prefs.setString('user_password', password);
@@ -192,7 +185,6 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  // Reset password
   Future<bool> resetPassword(String email) async {
     try {
       _setLoading(true);
@@ -208,7 +200,7 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  // Sign out
+
   Future<void> signOut() async {
     try {
       _setLoading(true);

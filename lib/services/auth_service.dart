@@ -6,13 +6,11 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Get current user
+
   User? get currentUser => _auth.currentUser;
 
-  // Auth state changes stream
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Sign up with email and password
   Future<UserModel?> signUpWithEmailAndPassword({
     required String email,
     required String password,
@@ -26,10 +24,8 @@ class AuthService {
 
       User? user = result.user;
       if (user != null) {
-        // Update display name
         await user.updateDisplayName(displayName);
         
-        // Create user document in Firestore
         UserModel userModel = UserModel(
           uid: user.uid,
           email: email,
@@ -48,7 +44,6 @@ class AuthService {
     }
   }
 
-  // Sign in with email and password
   Future<UserModel?> signInWithEmailAndPassword({
     required String email,
     required String password,
@@ -72,7 +67,6 @@ class AuthService {
     }
   }
 
-  // Reset password
   Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
@@ -80,8 +74,7 @@ class AuthService {
       throw Exception(e.toString());
     }
   }
-
-  // Sign out
+  
   Future<void> signOut() async {
     try {
       await _auth.signOut();

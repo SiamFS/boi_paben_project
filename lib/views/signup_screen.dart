@@ -4,8 +4,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../utils/app_theme.dart';
 import '../utils/validators.dart';
-import 'login_screen.dart';
-import 'home_screen.dart';
+import '../utils/routes.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -153,7 +152,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     obscureText: _obscurePassword,
                     validator: PasswordValidator.validate,
                     onChanged: (value) {
-                      setState(() {}); // Trigger rebuild for password criteria
+                      setState(() {}); 
                     },
                   ),
                   
@@ -228,9 +227,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           margin: const EdgeInsets.only(bottom: 16),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.red.withOpacity(0.1),
+                            color: AppColors.red.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.red.withOpacity(0.3)),
+                            border: Border.all(color: AppColors.red.withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             children: [
@@ -297,10 +296,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginScreen()),
-                          );
+                          Navigator.pushReplacementNamed(context, AppRoutes.login);
                         },
                         child: Text(
                           'Sign in',
@@ -357,10 +353,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
 
       if (success && mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
       }
     }
   }

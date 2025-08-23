@@ -13,7 +13,7 @@ class SellBookScreen extends StatefulWidget {
   const SellBookScreen({super.key});
 
   @override
-  _SellBookScreenState createState() => _SellBookScreenState();
+  State<SellBookScreen> createState() => _SellBookScreenState();
 }
 
 class _SellBookScreenState extends State<SellBookScreen> {
@@ -87,10 +87,11 @@ class _SellBookScreenState extends State<SellBookScreen> {
       
       return response.secureUrl;
     } catch (e) {
-      print('Cloudinary upload error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to upload image: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload image: $e')),
+        );
+      }
       return null;
     }
   }
@@ -109,18 +110,17 @@ class _SellBookScreenState extends State<SellBookScreen> {
     setState(() {
       _isUploading = true;
     });
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    final bookViewModel = Provider.of<BookViewModel>(context, listen: false);
 
     try {
-      // 1. Upload image and get URL
+
       final String? imageUrl = await _uploadImageToCloudinary(_imageFile!);
 
       if (imageUrl == null) {
-        // Error message is already shown in _uploadImageToCloudinary
+ 
         return;
       }
-
-      // 2. Prepare Book object
-      final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
       final newBook = Book(
         bookTitle: _bookTitleController.text,
         authorName: _authorNameController.text,
@@ -142,12 +142,9 @@ class _SellBookScreenState extends State<SellBookScreen> {
         seller: authViewModel.user?.displayName ?? 'Unknown',
       );
 
-      // 3. Upload book details to Firestore
-      final bookViewModel = Provider.of<BookViewModel>(context, listen: false);
       await bookViewModel.uploadBook(newBook);
 
       if (bookViewModel.errorMessage == null) {
-        // Save user address if auto-fill is enabled
         if (_useAutoFill && authViewModel.autoFillEnabled) {
           await authViewModel.saveUserAddress(
             streetAddress: _streetAddressController.text,
@@ -158,14 +155,18 @@ class _SellBookScreenState extends State<SellBookScreen> {
           );
         }
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Book uploaded successfully!')),
-        );
-        Navigator.pop(context);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Book uploaded successfully!')),
+          );
+          Navigator.pop(context);
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save book details: ${bookViewModel.errorMessage}')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save book details: ${bookViewModel.errorMessage}')),
+          );
+        }
       }
     } finally {
       setState(() {
@@ -401,7 +402,6 @@ class _SellBookScreenState extends State<SellBookScreen> {
   Widget _buildImagePicker() {
     return Column(
       children: [
-        // Show selected image if available
         if (_imageFile != null) ...[
           Container(
             height: 200,
@@ -422,7 +422,6 @@ class _SellBookScreenState extends State<SellBookScreen> {
           const SizedBox(height: 12),
         ],
         
-        // Photo picker button
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(

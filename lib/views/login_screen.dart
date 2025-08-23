@@ -4,8 +4,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../utils/app_theme.dart';
 import '../utils/validators.dart';
-import 'signup_screen.dart';
-import 'home_screen.dart';
+import '../utils/routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -160,9 +159,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           margin: const EdgeInsets.only(bottom: 16),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.red.withOpacity(0.1),
+                            color: AppColors.red.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.red.withOpacity(0.3)),
+                            border: Border.all(color: AppColors.red.withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             children: [
@@ -229,10 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const SignUpScreen()),
-                          );
+                          Navigator.pushNamed(context, AppRoutes.signup);
                         },
                         child: Text(
                           'Sign up',
@@ -265,10 +261,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (success && mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
       }
     }
   }

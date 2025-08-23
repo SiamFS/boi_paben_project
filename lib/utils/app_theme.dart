@@ -61,11 +61,11 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.textGray.withOpacity(0.2)),
+          borderSide: BorderSide(color: AppColors.textGray.withValues(alpha: 0.2)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.textGray.withOpacity(0.2)),
+          borderSide: BorderSide(color: AppColors.textGray.withValues(alpha: 0.2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -79,7 +79,7 @@ class AppTheme {
         fillColor: AppColors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         labelStyle: GoogleFonts.poppins(color: AppColors.textGray),
-        hintStyle: GoogleFonts.poppins(color: AppColors.textGray.withOpacity(0.7)),
+        hintStyle: GoogleFonts.poppins(color: AppColors.textGray.withValues(alpha: 0.7)),
       ),
       textTheme: GoogleFonts.poppinsTextTheme(),
     );

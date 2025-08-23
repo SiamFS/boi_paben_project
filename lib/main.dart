@@ -1,12 +1,11 @@
-import 'package:boi_paben_project/viewmodels/book_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'viewmodels/auth_viewmodel.dart';
+import 'viewmodels/book_viewmodel.dart';
 import 'utils/app_theme.dart';
-import 'views/login_screen.dart';
-import 'views/home_screen.dart';
+import 'utils/routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,21 +28,8 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'BoiPaben',
         theme: AppTheme.lightTheme,
-        home: Consumer<AuthViewModel>(
-          builder: (context, authViewModel, child) {
-            // Show loading screen while initializing
-            if (!authViewModel.isInitialized) {
-              return const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              );
-            }
-            
-            // Always show home screen - app works without login
-            return const HomeScreen();
-          },
-        ),
+        initialRoute: AppRoutes.home,
+        onGenerateRoute: AppRoutes.generateRoute,
         debugShowCheckedModeBanner: false,
       ),
     );

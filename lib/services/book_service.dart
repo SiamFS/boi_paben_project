@@ -11,11 +11,10 @@ class BookService {
       
       return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        data['_id'] = doc.id; // Add document ID
+        data['_id'] = doc.id; 
         return Book.fromJson(data);
       }).toList();
     } catch (e) {
-      print('Error fetching books: $e');
       throw Exception('Failed to load books: $e');
     }
   }
@@ -26,9 +25,7 @@ class BookService {
       bookData['createdAt'] = FieldValue.serverTimestamp();
       
       await _firestore.collection(_collection).add(bookData);
-      print("Book uploaded successfully!");
     } catch (e) {
-      print('Error uploading book: $e');
       throw Exception('Failed to upload book: $e');
     }
   }
@@ -46,7 +43,6 @@ class BookService {
         return Book.fromJson(data);
       }).toList();
     } catch (e) {
-      print('Error fetching user books: $e');
       throw Exception('Failed to load user books: $e');
     }
   }
@@ -64,7 +60,6 @@ class BookService {
         return Book.fromJson(data);
       }).toList();
     } catch (e) {
-      print('Error fetching books by category: $e');
       throw Exception('Failed to load books by category: $e');
     }
   }
@@ -72,10 +67,23 @@ class BookService {
   Future<void> deleteBook(String bookId) async {
     try {
       await _firestore.collection(_collection).doc(bookId).delete();
-      print("Book deleted successfully!");
     } catch (e) {
-      print('Error deleting book: $e');
       throw Exception('Failed to delete book: $e');
+    }
+  }
+
+  Future<void> updateBook(Book book) async {
+    try {
+      if (book.id == null) {
+        throw Exception('Book ID is required for updating');
+      }
+      
+      final bookData = book.toJson();
+      bookData['updatedAt'] = FieldValue.serverTimestamp();
+      
+      await _firestore.collection(_collection).doc(book.id).update(bookData);
+    } catch (e) {
+      throw Exception('Failed to update book: $e');
     }
   }
 
@@ -85,9 +93,7 @@ class BookService {
         'availability': availability,
         'updatedAt': FieldValue.serverTimestamp(),
       });
-      print("Book availability updated successfully!");
     } catch (e) {
-      print('Error updating book availability: $e');
       throw Exception('Failed to update book availability: $e');
     }
   }

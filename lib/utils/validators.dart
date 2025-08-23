@@ -8,22 +8,18 @@ class PasswordValidator {
       return 'Password must be at least 8 characters long';
     }
     
-    // Check for uppercase letter
     if (!password.contains(RegExp(r'[A-Z]'))) {
       return 'Password must contain at least one uppercase letter';
     }
     
-    // Check for lowercase letter
     if (!password.contains(RegExp(r'[a-z]'))) {
       return 'Password must contain at least one lowercase letter';
     }
-    
-    // Check for number
+
     if (!password.contains(RegExp(r'[0-9]'))) {
       return 'Password must contain at least one number';
     }
     
-    // Check for special character
     if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
       return 'Password must contain at least one special character';
     }
