@@ -215,20 +215,31 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   String _getErrorMessage(String error) {
+    
     if (error.contains('user-not-found')) {
-      return 'No user found with this email address.';
+      return 'No account found with this email address. Please check your email or sign up.';
     } else if (error.contains('wrong-password')) {
-      return 'Incorrect password.';
+      return 'Incorrect password. Please try again.';
+    } else if (error.contains('invalid-credential')) {
+      return 'Invalid email or password. Please check your credentials.';
     } else if (error.contains('email-already-in-use')) {
-      return 'An account already exists with this email address.';
+      return 'An account already exists with this email address. Please sign in instead.';
     } else if (error.contains('weak-password')) {
-      return 'The password is too weak.';
+      return 'The password is too weak. Please use at least 8 characters with uppercase, lowercase, numbers, and special characters.';
     } else if (error.contains('invalid-email')) {
-      return 'The email address is not valid.';
+      return 'The email address is not valid. Please enter a correct email format.';
     } else if (error.contains('too-many-requests')) {
-      return 'Too many failed attempts. Please try again later.';
+      return 'Too many failed attempts. Please wait a moment before trying again.';
+    } else if (error.contains('user-disabled')) {
+      return 'This account has been disabled. Please contact support.';
+    } else if (error.contains('operation-not-allowed')) {
+      return 'Email/password sign in is not enabled. Please contact support.';
+    } else if (error.contains('network-request-failed')) {
+      return 'Network error. Please check your internet connection and try again.';
+    } else if (error.contains('requires-recent-login')) {
+      return 'Please sign out and sign back in to perform this action.';
     } else {
-      return 'An error occurred. Please try again.';
+      return 'An unexpected error occurred. Please try again or contact support if the problem persists.';
     }
   }
 }

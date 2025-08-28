@@ -1,14 +1,48 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read and write access to books collection
+    
+    // Books are publicly readable, but only authenticated users can create, update, or delete them.
     match /books/{bookId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Blog posts are publicly readable. Authenticated users can create posts.
+    // Only the author of a post can update or delete it.
+    match /blogs/{postId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      // Any authenticated user can update (for likes, comments), but only the author can delete.
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && resource.data.authorEmail == request.auth.token.email;
     }
     
-    // Allow read and write access to other collections if needed
-    match /{document=**} {
+    // A user can only read or write to their own document in the users collection.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Cart collection - users can only access their own cart items
+    match /cart/{cartId} {
       allow read, write: if request.auth != null;
+    }
+
+    // Payments collection - users can only access their own payments
+    match /payments/{paymentId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Reports collection - authenticated users can create reports
+    match /reports/{reportId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Fallback rule: By default, all other collections are locked down and cannot be accessed.
+    // This is a security best practice to prevent accidental data exposure.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

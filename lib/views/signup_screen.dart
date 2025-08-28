@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../utils/app_theme.dart';
-import '../utils/validators.dart';
 import '../utils/routes.dart';
+import '../utils/validators.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -44,32 +44,46 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo and Title
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryOrange,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.menu_book,
-                          color: AppColors.white,
-                          size: 24,
-                        ),
+                  // Logo and Title (Clickable)
+                  InkWell(
+                    onTap: () {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        AppRoutes.home,
+                        (route) => false,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryOrange,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.menu_book,
+                              color: AppColors.white,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'BoiPaben',
+                            style: GoogleFonts.poppins(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.darkGray,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'BoiPaben',
-                        style: GoogleFonts.poppins(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.darkGray,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                   
                   const SizedBox(height: 48),
@@ -96,48 +110,58 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   
                   const SizedBox(height: 32),
                   
-                  // Name field
+                  // Name field with enhanced validation
                   TextFormField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Full Name',
                       hintText: 'Enter your full name',
-                      prefixIcon: Icon(Icons.person_outline),
+                      prefixIcon: const Icon(Icons.person_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.white,
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Full name is required';
-                      }
-                      if (value.length < 2) {
-                        return 'Name must be at least 2 characters long';
-                      }
-                      return null;
-                    },
+                    textInputAction: TextInputAction.next,
+                    textCapitalization: TextCapitalization.words,
+                    validator: NameValidator.validate,
                   ),
                   
                   const SizedBox(height: 16),
                   
-                  // Email field
+                  // Email field with enhanced validation
                   TextFormField(
                     controller: _emailController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Email',
-                      hintText: 'Enter your email',
-                      prefixIcon: Icon(Icons.email_outlined),
+                      hintText: 'Enter your email address',
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.white,
                     ),
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                     validator: EmailValidator.validate,
                   ),
                   
                   const SizedBox(height: 16),
                   
-                  // Password field
+                  // Password field with enhanced validation
                   TextFormField(
                     controller: _passwordController,
                     decoration: InputDecoration(
                       labelText: 'Password',
                       hintText: 'Enter your password',
                       prefixIcon: const Icon(Icons.lock_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.white,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility : Icons.visibility_off,
@@ -150,50 +174,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                     obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.next,
                     validator: PasswordValidator.validate,
-                    onChanged: (value) {
-                      setState(() {}); 
-                    },
                   ),
                   
                   const SizedBox(height: 16),
                   
-                  // Password criteria
-                  if (_passwordController.text.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.lightGray,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Password Requirements:',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.darkGray,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          ...PasswordValidator.getPasswordCriteria(_passwordController.text)
-                              .map((criteria) => _buildPasswordCriteria(criteria))
-                              ,
-                        ],
-                      ),
-                    ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Confirm Password field
+                  // Confirm password field
                   TextFormField(
                     controller: _confirmPasswordController,
                     decoration: InputDecoration(
                       labelText: 'Confirm Password',
-                      hintText: 'Confirm your password',
+                      hintText: 'Re-enter your password',
                       prefixIcon: const Icon(Icons.lock_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.white,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
@@ -206,15 +204,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                     obscureText: _obscureConfirmPassword,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
-                      }
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
-                      return null;
-                    },
+                    textInputAction: TextInputAction.done,
+                    validator: (value) => GeneralValidator.validatePasswordMatch(value, _passwordController.text),
                   ),
                   
                   const SizedBox(height: 24),
@@ -259,24 +250,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   // Sign up button
                   Consumer<AuthViewModel>(
                     builder: (context, authViewModel, child) {
-                      return ElevatedButton(
-                        onPressed: authViewModel.isLoading ? null : _signUp,
-                        child: authViewModel.isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                      return SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: authViewModel.isLoading ? null : _signUp,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryOrange,
+                            foregroundColor: AppColors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: authViewModel.isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                                  ),
+                                )
+                              : Text(
+                                  'Sign Up',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              )
-                            : Text(
-                                'Sign Up',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                        ),
                       );
                     },
                   ),
@@ -288,7 +290,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Already have an account? ",
+                        'Already have an account? ',
                         style: GoogleFonts.poppins(
                           color: AppColors.textGray,
                           fontSize: 14,
@@ -296,7 +298,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.pushReplacementNamed(context, AppRoutes.login);
+                          Navigator.pushNamed(context, AppRoutes.login);
                         },
                         child: Text(
                           'Sign in',
@@ -318,38 +320,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildPasswordCriteria(PasswordCriteria criteria) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Icon(
-            criteria.isValid ? Icons.check_circle : Icons.radio_button_unchecked,
-            size: 16,
-            color: criteria.isValid ? AppColors.green : AppColors.textGray,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            criteria.text,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: criteria.isValid ? AppColors.green : AppColors.textGray,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _signUp() async {
     if (_formKey.currentState!.validate()) {
       final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
       authViewModel.clearError();
       
+      // Additional validation before sending request
+      final email = _emailController.text.trim();
+      final name = _nameController.text.trim();
+      final password = _passwordController.text;
+      
+      // Validate email format one more time
+      if (!EmailValidator.isValidEmailFormat(email)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a valid email address'),
+            backgroundColor: AppColors.red,
+          ),
+        );
+        return;
+      }
+      
+      // Validate name format
+      final nameValidationResult = NameValidator.validate(name);
+      if (nameValidationResult != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(nameValidationResult),
+            backgroundColor: AppColors.red,
+          ),
+        );
+        return;
+      }
+      
       final success = await authViewModel.signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        displayName: _nameController.text.trim(),
+        email: email,
+        password: password,
+        displayName: name,
       );
 
       if (success && mounted) {

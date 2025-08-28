@@ -64,6 +64,22 @@ class AppDrawer extends StatelessWidget {
                 },
               ),
               ListTile(
+                leading: const Icon(Icons.storefront_outlined),
+                title: Text('Shop', style: GoogleFonts.poppins()),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.shop);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.article_outlined),
+                title: Text('Book Blog Community', style: GoogleFonts.poppins()),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.blog);
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.sell_outlined),
                 title: Text('Sell Your Books', style: GoogleFonts.poppins()),
                 onTap: () {

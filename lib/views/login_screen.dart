@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../utils/app_theme.dart';
-import '../utils/validators.dart';
 import '../utils/routes.dart';
+import '../utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,32 +39,46 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo and Title
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryOrange,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.menu_book,
-                          color: AppColors.white,
-                          size: 24,
-                        ),
+                  // Logo and Title (Clickable)
+                  InkWell(
+                    onTap: () {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        AppRoutes.home,
+                        (route) => false,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryOrange,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.menu_book,
+                              color: AppColors.white,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'BoiPaben',
+                            style: GoogleFonts.poppins(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.darkGray,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'BoiPaben',
-                        style: GoogleFonts.poppins(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.darkGray,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                   
                   const SizedBox(height: 48),
@@ -91,27 +105,38 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   const SizedBox(height: 32),
                   
-                  // Email field
+                  // Email field with enhanced validation
                   TextFormField(
                     controller: _emailController,
                     decoration: InputDecoration(
                       labelText: 'Email',
-                      hintText: 'Enter your email',
+                      hintText: 'Enter your email address',
                       prefixIcon: const Icon(Icons.email_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.white,
                     ),
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                     validator: EmailValidator.validate,
                   ),
                   
                   const SizedBox(height: 16),
                   
-                  // Password field
+                  // Password field with enhanced validation
                   TextFormField(
                     controller: _passwordController,
                     decoration: InputDecoration(
                       labelText: 'Password',
                       hintText: 'Enter your password',
                       prefixIcon: const Icon(Icons.lock_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: AppColors.white,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility : Icons.visibility_off,
@@ -124,12 +149,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     obscureText: _obscurePassword,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password is required';
-                      }
-                      return null;
-                    },
+                    textInputAction: TextInputAction.done,
+                    validator: PasswordValidator.validateLogin,
                   ),
                   
                   const SizedBox(height: 8),
@@ -191,24 +212,35 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Sign in button
                   Consumer<AuthViewModel>(
                     builder: (context, authViewModel, child) {
-                      return ElevatedButton(
-                        onPressed: authViewModel.isLoading ? null : _signIn,
-                        child: authViewModel.isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                      return SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: authViewModel.isLoading ? null : _signIn,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryOrange,
+                            foregroundColor: AppColors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: authViewModel.isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                                  ),
+                                )
+                              : Text(
+                                  'Sign In',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              )
-                            : Text(
-                                'Sign In',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                        ),
                       );
                     },
                   ),
@@ -255,8 +287,21 @@ class _LoginScreenState extends State<LoginScreen> {
       final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
       authViewModel.clearError();
       
+      // Validate email format one more time before sending request
+      final email = _emailController.text.trim();
+      
+      if (!EmailValidator.isValidEmailFormat(email)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a valid email address'),
+            backgroundColor: AppColors.red,
+          ),
+        );
+        return;
+      }
+      
       final success = await authViewModel.signIn(
-        email: _emailController.text.trim(),
+        email: email,
         password: _passwordController.text,
       );
 
@@ -286,9 +331,12 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: emailController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Email',
                 hintText: 'Enter your email',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               keyboardType: TextInputType.emailAddress,
             ),
@@ -308,8 +356,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: authViewModel.isLoading
                     ? null
                     : () async {
-                        if (emailController.text.isNotEmpty) {
-                          final success = await authViewModel.resetPassword(emailController.text.trim());
+                        final email = emailController.text.trim();
+                        if (email.isNotEmpty) {
+                          if (!EmailValidator.isValidEmailFormat(email)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter a valid email address'),
+                                backgroundColor: AppColors.red,
+                              ),
+                            );
+                            return;
+                          }
+                          
+                          final success = await authViewModel.resetPassword(email);
                           if (success && context.mounted) {
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -322,8 +381,18 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             );
                           }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please enter your email address'),
+                              backgroundColor: AppColors.red,
+                            ),
+                          );
                         }
                       },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryOrange,
+                ),
                 child: authViewModel.isLoading
                     ? const SizedBox(
                         height: 16,

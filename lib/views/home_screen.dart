@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/book_model.dart';
+import '../models/cart_model.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/book_viewmodel.dart';
+import '../viewmodels/cart_viewmodel.dart';
 import '../utils/app_theme.dart';
 import '../utils/routes.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/search_bar_widget.dart';
+import '../widgets/book_details_modal.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,35 +20,35 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final GlobalKey<SearchBarWidgetState> _searchBarKey = GlobalKey<SearchBarWidgetState>();
+  List<Book> _filteredBooks = [];
   bool _isSearching = false;
   String _searchQuery = '';
-  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<BookViewModel>(context, listen: false).fetchBooks();
+      
+      // Load cart items if user is authenticated
+      final auth = Provider.of<AuthViewModel>(context, listen: false);
+      if (auth.isAuthenticated && auth.user != null) {
+        Provider.of<CartViewModel>(context, listen: false).loadCartItems(auth.user!.uid);
+      }
     });
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void _onSearchUpdate(List<Book> filteredBooks, bool isSearching, String query) {
+    setState(() {
+      _filteredBooks = filteredBooks;
+      _isSearching = isSearching;
+      _searchQuery = query;
+    });
   }
 
-  List<Book> _getFilteredBooks(List<Book> books) {
-    if (_searchQuery.isEmpty) return books;
-    
-    return books.where((book) {
-      final query = _searchQuery.toLowerCase();
-      return book.bookTitle.toLowerCase().contains(query) ||
-             book.authorName.toLowerCase().contains(query) ||
-             book.category.toLowerCase().contains(query) ||
-             book.bookDescription.toLowerCase().contains(query) ||
-             (book.publisher?.toLowerCase().contains(query) ?? false);
-    }).toList();
+  void _toggleSearch() {
+    _searchBarKey.currentState?.toggleSearch();
   }
 
   @override
@@ -82,15 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                _isSearching = !_isSearching;
-                if (!_isSearching) {
-                  _searchController.clear();
-                  _searchQuery = '';
-                }
-              });
-            },
+            onPressed: _toggleSearch,
           ),
           Consumer<AuthViewModel>(
             builder: (context, auth, child) {
@@ -131,27 +127,37 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.shopping_cart_outlined, size: 18, color: AppColors.white),
-                          const SizedBox(width: 4),
-                          Text(
-                            '0',
-                            style: GoogleFonts.poppins(
-                              color: AppColors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                    Consumer<CartViewModel>(
+                      builder: (context, cart, child) {
+                        return GestureDetector(
+                          onTap: () {
+                            // Navigate to cart page
+                            Navigator.pushNamed(context, AppRoutes.cart);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.shopping_cart_outlined, size: 18, color: AppColors.white),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${cart.cartCount}',
+                                  style: GoogleFonts.poppins(
+                                    color: AppColors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -163,66 +169,15 @@ class _HomeScreenState extends State<HomeScreen> {
       drawer: const AppDrawer(),
       body: Column(
         children: [
-          // Search Bar (appears when searching)
-          AnimatedContainer(
-            duration: Duration(milliseconds: 300),
-            height: _isSearching ? 60 : 0,
-            color: AppColors.primaryOrange,
-            child: _isSearching 
-              ? Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withValues(alpha: 0.2),
-                          spreadRadius: 1,
-                          blurRadius: 3,
-                          offset: Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: 'Search by book title, author, category...',
-                        hintStyle: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 16,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: AppColors.primaryOrange,
-                        ),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(Icons.clear, color: Colors.grey),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() {
-                                    _searchQuery = '';
-                                  });
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                        });
-                      },
-                    ),
-                  ),
-                )
-              : SizedBox.shrink(),
+          // Search Bar Widget
+          Consumer<BookViewModel>(
+            builder: (context, bookViewModel, child) {
+              return SearchBarWidget(
+                key: _searchBarKey,
+                books: bookViewModel.books,
+                onSearchUpdate: _onSearchUpdate,
+              );
+            },
           ),
           // Hero Section (hide when searching)
           if (!_isSearching)
@@ -292,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            // Scroll to books section
+                            Navigator.pushNamed(context, AppRoutes.shop);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryOrange,
@@ -392,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
                 
-                final filteredBooks = _getFilteredBooks(bookViewModel.books);
+                final filteredBooks = _filteredBooks.isNotEmpty || _isSearching ? _filteredBooks : bookViewModel.books;
                 
                 if (filteredBooks.isEmpty && _searchQuery.isNotEmpty) {
                   return Center(
@@ -454,38 +409,189 @@ class _HomeScreenState extends State<HomeScreen> {
                   onRefresh: () async {
                     await bookViewModel.fetchBooks();
                   },
-                  child: GridView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.7,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: filteredBooks.length,
-                    itemBuilder: (context, index) {
-                      final book = filteredBooks[index];
-                      return Card(
-                        elevation: 4,
-                        clipBehavior: Clip.antiAlias,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Column(
+                    children: [
+                      // Latest Books Header
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Expanded(
-                              child: Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: AppColors.lightGray,
-                                ),
-                                child: Image.network(
-                                  book.imageURL,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.broken_image, size: 50),
-                                ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryOrange,
+                                borderRadius: BorderRadius.circular(25),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primaryOrange.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.auto_stories,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Latest Books',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Books Grid
+                      Expanded(
+                        child: GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.7,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                          itemCount: filteredBooks.length,
+                          itemBuilder: (context, index) {
+                            final book = filteredBooks[index];
+                            return Card(
+                              elevation: 4,
+                              clipBehavior: Clip.antiAlias,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Stack(
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () {
+                                            BookDetailsModal.show(context, book);
+                                          },
+                                          child: Container(
+                                            width: double.infinity,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.lightGray,
+                                            ),
+                                            child: Image.network(
+                                              book.imageURL,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) =>
+                                                  const Icon(Icons.broken_image, size: 50),
+                                            ),
+                                          ),
+                                        ),
+                                        // Cart button overlay
+                                        Positioned(
+                                          top: 8,
+                                          right: 8,
+                                          child: Consumer<CartViewModel>(
+                                      builder: (context, cart, child) {
+                                        return Consumer<AuthViewModel>(
+                                          builder: (context, auth, child) {
+                                            return Container(
+                                              decoration: BoxDecoration(
+                                                color: AppColors.white,
+                                                shape: BoxShape.circle,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withValues(alpha: 0.1),
+                                                    blurRadius: 4,
+                                                    offset: Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: IconButton(
+                                                onPressed: () async {
+                                                  if (!auth.isAuthenticated) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text('Please log in to add items to cart'),
+                                                        backgroundColor: AppColors.red,
+                                                      ),
+                                                    );
+                                                    Navigator.pushNamed(context, AppRoutes.login);
+                                                    return;
+                                                  }
+                                                  
+                                                  // Check if book is already in cart
+                                                  final isAlreadyInCart = cart.cartItems.any((item) => item.bookId == book.id);
+                                                  
+                                                  if (isAlreadyInCart) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('Book "${book.bookTitle}" is already in your cart'),
+                                                        backgroundColor: AppColors.primaryOrange,
+                                                      ),
+                                                    );
+                                                    return;
+                                                  }
+                                                  
+                                                  // Create CartItem and add to cart
+                                                  final cartItem = CartItem(
+                                                    id: '', // Will be set by Firestore
+                                                    bookId: book.id ?? '',
+                                                    bookTitle: book.bookTitle,
+                                                    authorName: book.authorName,
+                                                    category: book.category,
+                                                    price: double.tryParse(book.price) ?? 0.0,
+                                                    imageUrl: book.imageURL,
+                                                    description: book.bookDescription,
+                                                    userId: auth.user?.uid ?? '',
+                                                    addedAt: DateTime.now(),
+                                                    quantity: 1,
+                                                  );
+                                                  
+                                                  final success = await cart.addToCart(cartItem);
+                                                  
+                                                  if (success) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('Added "${book.bookTitle}" to cart'),
+                                                        backgroundColor: AppColors.green,
+                                                      ),
+                                                    );
+                                                  } else {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('Failed to add item to cart'),
+                                                        backgroundColor: AppColors.red,
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                                icon: Icon(
+                                                  Icons.add_shopping_cart,
+                                                  color: AppColors.primaryOrange,
+                                                  size: 20,
+                                                ),
+                                                constraints: BoxConstraints.tightFor(
+                                                  width: 36,
+                                                  height: 36,
+                                                ),
+                                                padding: EdgeInsets.zero,
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             Padding(
@@ -529,6 +635,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     },
                   ),
+                        ),
+                      ],
+                    ),
                 );
               },
             ),
