@@ -24,12 +24,10 @@ class BookViewModel extends ChangeNotifier {
     _booksSubscription = _bookService.getBooksStream().listen(
       (books) {
         _books = books;
-        print('BookViewModel: Received ${books.length} books from stream');
         notifyListeners();
       },
       onError: (error) {
         _errorMessage = error.toString();
-        print('BookViewModel stream error: $error');
         notifyListeners();
       },
     );
@@ -42,12 +40,10 @@ class BookViewModel extends ChangeNotifier {
 
     try {
       _books = await _bookService.getBooks();
-      print('Fetched ${_books.length} books, ${availableBooks.length} available');
       _errorMessage = null;
     } catch (e) {
       _errorMessage = e.toString();
       _books = [];
-      print('Error fetching books: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -116,7 +112,6 @@ class BookViewModel extends ChangeNotifier {
 
   // Force refresh books data
   Future<void> forceRefresh() async {
-    print('BookViewModel: Force refreshing books data');
     await fetchBooks();
   }
 

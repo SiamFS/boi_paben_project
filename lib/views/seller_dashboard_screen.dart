@@ -14,7 +14,7 @@ class SellerDashboardScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Seller Dashboard',
+          'Dashboard',
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.primaryOrange,
@@ -130,7 +130,7 @@ class SellerDashboardScreen extends StatelessWidget {
             Expanded(
               child: _buildStatCard(
                 title: 'Total Earnings',
-                value: '৳${salesData.totalEarnings.toStringAsFixed(0)}',
+                value: 'TK${salesData.totalEarnings.toStringAsFixed(0)}',
                 icon: Icons.attach_money,
                 color: AppColors.green,
               ),
@@ -154,21 +154,13 @@ class SellerDashboardScreen extends StatelessWidget {
               child: _buildStatCard(
                 title: 'Average Price',
                 value: salesData.totalBooksSold > 0 
-                    ? '৳${(salesData.totalEarnings / salesData.totalBooksSold).toStringAsFixed(0)}'
-                    : '৳0',
+                    ? 'TK${(salesData.totalEarnings / salesData.totalBooksSold).toStringAsFixed(0)}'
+                    : 'TK0',
                 icon: Icons.trending_up,
                 color: AppColors.primaryOrange,
               ),
             ),
             const SizedBox(width: 16),
-            Expanded(
-              child: _buildStatCard(
-                title: 'This Month',
-                value: '${_getThisMonthSales(salesData.soldBooks)}',
-                icon: Icons.calendar_month,
-                color: AppColors.green,
-              ),
-            ),
           ],
         ),
       ],
@@ -390,7 +382,7 @@ class SellerDashboardScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '৳${book.salePrice.toStringAsFixed(0)}',
+                  'TK${book.salePrice.toStringAsFixed(0)}',
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -452,13 +444,6 @@ class SellerDashboardScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  int _getThisMonthSales(List<SoldBook> soldBooks) {
-    final now = DateTime.now();
-    return soldBooks.where((book) => 
-      book.soldAt.year == now.year && book.soldAt.month == now.month
-    ).length;
   }
 
   String _formatDate(DateTime date) {

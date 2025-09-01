@@ -9,8 +9,7 @@ import '../utils/app_theme.dart';
 import '../utils/routes.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/search_bar_widget.dart';
-import '../widgets/book_cart_button.dart';
-import '../widgets/book_details_modal.dart';
+import '../widgets/book_card_widget.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -418,101 +417,11 @@ class _ShopScreenState extends State<ShopScreen> {
         itemCount: booksToShow.length,
         itemBuilder: (context, index) {
           final book = booksToShow[index];
-          return _buildBookCard(book);
+          return BookCardWidget(
+            book: book,
+            showCartButton: true,
+          );
         },
-      ),
-    );
-  }
-
-  Widget _buildBookCard(Book book) {
-    return Card(
-      elevation: 4,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 3,
-            child: Stack(
-              children: [
-                GestureDetector(
-                  onTap: () => BookDetailsModal.show(context, book),
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(color: AppColors.lightGray),
-                    child: Image.network(
-                      book.imageURL,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.broken_image, size: 50),
-                    ),
-                  ),
-                ),
-                BookCartButton(book: book),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    book.bookTitle,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'by ${book.authorName}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      color: AppColors.textGray,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryOrange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      book.category,
-                      style: GoogleFonts.poppins(
-                        fontSize: 9,
-                        color: AppColors.primaryOrange,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '৳${book.price}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryOrange,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

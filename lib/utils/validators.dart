@@ -144,7 +144,7 @@ class PriceValidator {
     }
     
     if (priceValue > 100000) {
-      return 'Price cannot exceed ৳100,000';
+      return 'Price cannot exceed TK100,000';
     }
     
     return null;

@@ -173,7 +173,7 @@ class _CODCheckoutScreenState extends State<CODCheckoutScreen> {
                   style: GoogleFonts.poppins(fontSize: 12),
                 ),
                 trailing: Text(
-                  '৳${item.price.toStringAsFixed(0)}',
+                  '\$${item.price.toStringAsFixed(0)}',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold,
                     color: AppColors.red,
@@ -214,16 +214,17 @@ class _CODCheckoutScreenState extends State<CODCheckoutScreen> {
                       unavailableBookIds,
                     );
                     
-                    if (success) {
+                    if (success && mounted) {
                       // Refresh cart
                       final auth = Provider.of<AuthViewModel>(context, listen: false);
                       cart.loadCartItems(auth.user!.uid);
                       
                         
-                        AppSnackBar.showSuccess(
-                          context,
-                          'Unavailable books removed from cart',
-                        );                      Navigator.pop(context);
+                      AppSnackBar.showSuccess(
+                        context,
+                        'Unavailable books removed from cart',
+                      );
+                      Navigator.pop(context);
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -307,7 +308,7 @@ class _CODCheckoutScreenState extends State<CODCheckoutScreen> {
                     ),
                   ),
                   Text(
-                    '৳${item.price.toStringAsFixed(0)}',
+                    'TK${item.price.toStringAsFixed(0)}',
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold,
                       color: AppColors.primaryOrange,
@@ -315,7 +316,7 @@ class _CODCheckoutScreenState extends State<CODCheckoutScreen> {
                   ),
                 ],
               ),
-            )).toList(),
+            )),
             
             const Divider(),
             
@@ -344,7 +345,7 @@ class _CODCheckoutScreenState extends State<CODCheckoutScreen> {
             ),
           ),
           Text(
-            '৳${amount.toStringAsFixed(0)}',
+            'TK${amount.toStringAsFixed(0)}',
             style: GoogleFonts.poppins(
               fontSize: isTotal ? 16 : 14,
               fontWeight: FontWeight.bold,
@@ -515,7 +516,7 @@ class _CODCheckoutScreenState extends State<CODCheckoutScreen> {
                           ),
                         ),
                         Text(
-                          'Pay ৳${widget.total.toStringAsFixed(0)} when your books are delivered',
+                          'Pay TK${widget.total.toStringAsFixed(0)} when your books are delivered',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             color: AppColors.textGray,
@@ -582,7 +583,7 @@ class _CODCheckoutScreenState extends State<CODCheckoutScreen> {
                 ),
               )
             : Text(
-                'Place COD Order - ৳${widget.total.toStringAsFixed(0)}',
+                'Place COD Order - TK${widget.total.toStringAsFixed(0)}',
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -618,28 +619,32 @@ class _CODCheckoutScreenState extends State<CODCheckoutScreen> {
 
       if (paymentId != null) {
         // Force refresh book data to reflect availability changes
-        final bookViewModel = Provider.of<BookViewModel>(context, listen: false);
-        await bookViewModel.forceRefresh();
-        
-        // Show success and navigate to order confirmation
-        AppSnackBar.showSuccess(
-          context,
-          'Order placed successfully!',
-        );
+        if (mounted) {
+          final bookViewModel = Provider.of<BookViewModel>(context, listen: false);
+          await bookViewModel.forceRefresh();
+          
+          // Show success and navigate to order confirmation
+          AppSnackBar.showSuccess(
+            context,
+            'Order placed successfully!',
+          );
 
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.home,
-          (route) => false,
-        );
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.home,
+            (route) => false,
+          );
+        }
       } else {
         throw Exception('Failed to process payment');
       }
     } catch (e) {
-      AppSnackBar.showError(
-        context,
-        'Failed to place order. Please try again.',
-      );
+      if (mounted) {
+        AppSnackBar.showError(
+          context,
+          'Failed to place order. Please try again.',
+        );
+      }
     } finally {
       setState(() {
         _isProcessing = false;

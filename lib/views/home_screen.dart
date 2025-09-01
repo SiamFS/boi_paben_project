@@ -9,8 +9,7 @@ import '../utils/app_theme.dart';
 import '../utils/routes.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/search_bar_widget.dart';
-import '../widgets/book_details_modal.dart';
-import '../widgets/book_cart_button.dart';
+import '../widgets/book_card_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,7 +18,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final GlobalKey<SearchBarWidgetState> _searchBarKey = GlobalKey<SearchBarWidgetState>();
   List<Book> _filteredBooks = [];
   bool _isSearching = false;
@@ -28,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<BookViewModel>(context, listen: false).fetchBooks();
       
@@ -37,6 +37,21 @@ class _HomeScreenState extends State<HomeScreen> {
         Provider.of<CartViewModel>(context, listen: false).loadCartItems(auth.user!.uid);
       }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh books when app comes back to foreground
+    if (state == AppLifecycleState.resumed) {
+      Provider.of<BookViewModel>(context, listen: false).fetchBooks();
+    }
   }
 
   void _onSearchUpdate(List<Book> filteredBooks, bool isSearching, String query) {
@@ -466,100 +481,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemCount: filteredBooks.length,
                           itemBuilder: (context, index) {
                             final book = filteredBooks[index];
-                            return Card(
-                              elevation: 4,
-                              clipBehavior: Clip.antiAlias,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Stack(
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () {
-                                            BookDetailsModal.show(context, book);
-                                          },
-                                          child: Container(
-                                            width: double.infinity,
-                                            decoration: BoxDecoration(
-                                              color: AppColors.lightGray,
-                                            ),
-                                            child: Image.network(
-                                              book.imageURL,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) =>
-                                                  const Icon(Icons.broken_image, size: 50),
-                                            ),
-                                          ),
-                                        ),
-                                        // Cart button overlay
-                                        BookCartButton(book: book),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    book.bookTitle,
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'by ${book.authorName}',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: AppColors.textGray,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primaryOrange.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      book.category,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 10,
-                                        color: AppColors.primaryOrange,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    '৳${book.price}',
-                                    style: GoogleFonts.poppins(
-                                      color: AppColors.primaryOrange,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                            return BookCardWidget(
+                              book: book,
+                              showCartButton: true,
+                            );
+                          },
                   ),
                         ),
                       ],

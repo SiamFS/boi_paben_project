@@ -15,13 +15,8 @@ class BookService {
         return Book.fromJson(data);
       }).toList();
       
-      print('BookService: Loaded ${books.length} books');
-      final availableBooks = books.where((book) => book.availability != 'sold').length;
-      print('BookService: $availableBooks available books');
-      
       return books;
     } catch (e) {
-      print('BookService error: $e');
       throw Exception('Failed to load books: $e');
     }
   }
@@ -38,7 +33,6 @@ class BookService {
             return Book.fromJson(data);
           }).toList();
           
-          print('BookService Stream: Loaded ${books.length} books');
           return books;
         });
   }
@@ -56,10 +50,8 @@ class BookService {
         return Book.fromJson(data);
       }).where((book) => book.availability != 'sold').toList();
       
-      print('BookService: Found ${books.length} available books');
       return books;
     } catch (e) {
-      print('BookService getAvailableBooks error: $e');
       throw Exception('Failed to load available books: $e');
     }
   }

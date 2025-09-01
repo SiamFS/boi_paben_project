@@ -672,7 +672,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
 
     final success = await blogViewModel.addComment(_currentPost.id!, comment);
-    if (success) {
+    if (success && mounted) {
       _commentController.clear();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -680,7 +680,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           backgroundColor: AppColors.green,
         ),
       );
-    } else {
+    } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to add comment. Please try again.', style: GoogleFonts.poppins()),

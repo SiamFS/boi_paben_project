@@ -198,7 +198,7 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Delivery Fee: ৳${deliveryFee.toStringAsFixed(0)}',
+                          'Delivery Fee: \$${deliveryFee.toStringAsFixed(0)}',
                           style: GoogleFonts.poppins(
                             color: AppColors.primaryOrange,
                             fontWeight: FontWeight.bold,
@@ -268,7 +268,7 @@ class _CartScreenState extends State<CartScreen> {
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        '৳${item.price.toStringAsFixed(0)}',
+                                        '\$${item.price.toStringAsFixed(0)}',
                                         style: GoogleFonts.poppins(
                                           color: AppColors.primaryOrange,
                                           fontWeight: FontWeight.bold,
@@ -353,7 +353,7 @@ class _CartScreenState extends State<CartScreen> {
                               style: GoogleFonts.poppins(fontSize: 16),
                             ),
                             Text(
-                              '৳${cart.subtotal.toStringAsFixed(0)}',
+                              '\$${cart.subtotal.toStringAsFixed(0)}',
                               style: GoogleFonts.poppins(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -370,7 +370,7 @@ class _CartScreenState extends State<CartScreen> {
                               style: GoogleFonts.poppins(fontSize: 16),
                             ),
                             Text(
-                              '৳${deliveryFee.toStringAsFixed(0)}',
+                              '\$${deliveryFee.toStringAsFixed(0)}',
                               style: GoogleFonts.poppins(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -390,7 +390,7 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                             ),
                             Text(
-                              '৳${totalWithDelivery.toStringAsFixed(0)}',
+                              '\$${totalWithDelivery.toStringAsFixed(0)}',
                               style: GoogleFonts.poppins(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -418,7 +418,7 @@ class _CartScreenState extends State<CartScreen> {
                               );
                               
                               // Refresh cart and book data when returning
-                              if (result != null) {
+                              if (result != null && mounted) {
                                 final auth = Provider.of<AuthViewModel>(context, listen: false);
                                 final bookViewModel = Provider.of<BookViewModel>(context, listen: false);
                                 

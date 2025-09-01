@@ -127,7 +127,7 @@ class BookDetailsModal extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              '৳${book.price}',
+                              'TK${book.price}',
                               style: GoogleFonts.poppins(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,

@@ -88,7 +88,6 @@ class PaymentService {
           'soldTo': buyerEmail,
           'updatedAt': FieldValue.serverTimestamp(),
         });
-        print('Updating book ${item.bookId} availability to sold');
       }
 
       // Clear buyer's cart
@@ -116,12 +115,8 @@ class PaymentService {
       // Commit batch
       await batch.commit();
       
-      print('COD Payment processed successfully: ${paymentRef.id}');
-      print('Books marked as sold: ${cartItems.map((item) => item.bookId).join(', ')}');
-
       return paymentRef.id;
     } catch (e) {
-      print('Error processing COD payment: $e');
       return null;
     }
   }
@@ -184,7 +179,6 @@ class PaymentService {
 
       return SalesData.fromSoldBooks('', sellerEmail, soldBooks);
     } catch (e) {
-      print('Error getting seller sales data: $e');
       return SalesData(
         sellerId: '',
         sellerEmail: sellerEmail,
@@ -205,7 +199,6 @@ class PaymentService {
       });
       return true;
     } catch (e) {
-      print('Error updating payment status: $e');
       return false;
     }
   }
@@ -225,7 +218,6 @@ class PaymentService {
         }
       }
     } catch (e) {
-      print('Error checking book availability: $e');
       // Return all as unavailable on error
       for (final bookId in bookIds) {
         availability[bookId] = false;
@@ -255,7 +247,6 @@ class PaymentService {
       await batch.commit();
       return true;
     } catch (e) {
-      print('Error removing unavailable items from cart: $e');
       return false;
     }
   }
@@ -276,7 +267,6 @@ class PaymentService {
       }
       return null;
     } catch (e) {
-      print('Error getting payment by ID: $e');
       return null;
     }
   }

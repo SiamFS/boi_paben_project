@@ -292,7 +292,7 @@ class _SellBookScreenState extends State<SellBookScreen> {
                       _buildTextField(_bookTitleController, 'Book Title'),
                       _buildTextField(_authorNameController, 'Author Name'),
                       _buildDropdown(_categories, 'Category', _selectedCategory, (val) => setState(() => _selectedCategory = val)),
-                      _buildTextField(_priceController, 'Price (৳)', keyboardType: TextInputType.number),
+                      _buildTextField(_priceController, 'Price (TK)', keyboardType: TextInputType.number),
                       _buildTextField(_bookDescriptionController, 'Book Description', maxLines: 3),
                       _buildTextField(_publisherController, 'Publisher'),
                       _buildTextField(_editionController, 'Edition (Optional)', isRequired: false),

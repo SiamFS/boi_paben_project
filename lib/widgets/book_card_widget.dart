@@ -98,7 +98,7 @@ class BookCardWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _truncateText(title, 18),
+                    _truncateText(title, 20), // Adjusted to around "Rick and Morty" length
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
@@ -108,7 +108,7 @@ class BookCardWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _truncateText('by $author', 18),
+                    _truncateText('by $author', 25), // Adjusted for author length
                     style: GoogleFonts.poppins(
                       fontSize: 10,
                       color: AppColors.textGray,
@@ -136,7 +136,7 @@ class BookCardWidget extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    _truncateText('৳$price', 10),
+                    _truncateText('TK$price', 10),
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,

@@ -243,7 +243,7 @@ class _ManageBooksScreenState extends State<ManageBooksScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '৳${book.price}',
+                    'TK${book.price}',
                     style: GoogleFonts.poppins(
                       color: AppColors.green,
                       fontSize: 20,

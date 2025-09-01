@@ -35,7 +35,6 @@ class PurchaseHistoryScreen extends StatelessWidget {
               }
 
               if (snapshot.hasError) {
-                print('Purchase history error: ${snapshot.error}');
                 return _buildError(snapshot.error.toString());
               }
 
@@ -254,7 +253,7 @@ class PurchaseHistoryScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '৳${item.price.toStringAsFixed(0)}',
+                      'TK${item.price.toStringAsFixed(0)}',
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryOrange,
@@ -301,7 +300,7 @@ class PurchaseHistoryScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '৳${payment.total.toStringAsFixed(0)}',
+                  'TK${payment.total.toStringAsFixed(0)}',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,

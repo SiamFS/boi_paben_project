@@ -8,6 +8,7 @@ import '../models/book_model.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/book_viewmodel.dart';
 import '../utils/app_theme.dart';
+import '../utils/routes.dart';
 
 class EditBookScreen extends StatefulWidget {
   final Book? book;
@@ -220,7 +221,7 @@ class _EditBookScreenState extends State<EditBookScreen> {
               setState(() => _selectedCategory = value);
             }),
             const SizedBox(height: 16),
-            _buildTextField('Price (৳)', _priceController, 
+            _buildTextField('Price (TK)', _priceController, 
               isRequired: true, keyboardType: TextInputType.number),
             const SizedBox(height: 16),
             _buildTextField('Description', _bookDescriptionController, 
@@ -429,6 +430,8 @@ class _EditBookScreenState extends State<EditBookScreen> {
 
       if (widget.book == null) {
         await bookViewModel.uploadBook(book);
+        // Trigger a refresh to ensure home page shows the new book
+        await bookViewModel.fetchBooks();
       } else {
         await bookViewModel.updateBook(book);
       }
@@ -440,7 +443,18 @@ class _EditBookScreenState extends State<EditBookScreen> {
             backgroundColor: AppColors.green,
           ),
         );
-        Navigator.pop(context);
+        
+        if (widget.book == null) {
+          // For new book uploads, navigate to home to show the new book
+          Navigator.pushNamedAndRemoveUntil(
+            context, 
+            AppRoutes.home, 
+            (route) => false,
+          );
+        } else {
+          // For edits, just go back
+          Navigator.pop(context);
+        }
       }
     } catch (e) {
       if (mounted) {
