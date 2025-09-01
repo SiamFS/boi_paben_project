@@ -210,32 +210,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   
                   const SizedBox(height: 24),
                   
-                  // Error message
+                  // Error message with improved styling
                   Consumer<AuthViewModel>(
                     builder: (context, authViewModel, child) {
                       if (authViewModel.errorMessage != null) {
                         return Container(
                           margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: AppColors.red.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.red.withValues(alpha: 0.3)),
+                            color: AppColors.red.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppColors.red.withValues(alpha: 0.2),
+                              width: 1,
+                            ),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.error_outline,
                                 color: AppColors.red,
-                                size: 20,
+                                size: 18,
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   authViewModel.errorMessage!,
                                   style: GoogleFonts.poppins(
                                     color: AppColors.red,
-                                    fontSize: 14,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ),
@@ -252,7 +256,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     builder: (context, authViewModel, child) {
                       return SizedBox(
                         width: double.infinity,
-                        height: 50,
+                        height: 48,
                         child: ElevatedButton(
                           onPressed: authViewModel.isLoading ? null : _signUp,
                           style: ElevatedButton.styleFrom(
@@ -261,11 +265,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
+                            elevation: 2,
                           ),
                           child: authViewModel.isLoading
                               ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
+                                  height: 18,
+                                  width: 18,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),

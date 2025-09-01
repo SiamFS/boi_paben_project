@@ -67,9 +67,37 @@ class AuthService {
     }
   }
 
+  // Check if user exists by email (alternative approach)
+  Future<bool> checkUserExists(String email) async {
+    try {
+      // Try to send password reset email as a way to check if user exists
+      // This is a workaround since fetchSignInMethodsForEmail is deprecated
+      await _auth.sendPasswordResetEmail(email: email);
+      return true; // If no exception, user exists
+    } on FirebaseAuthException catch (e) {
+      // Check specific error codes
+      if (e.code == 'user-not-found') {
+        return false;
+      }
+      // For other errors, assume user exists to avoid security issues
+      return true;
+    } catch (e) {
+      // For any other error, assume user exists
+      return true;
+    }
+  }
+
   Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        throw Exception('No account found with this email address.');
+      } else if (e.code == 'invalid-email') {
+        throw Exception('Please enter a valid email address.');
+      } else {
+        throw Exception('Failed to send password reset email. Please try again.');
+      }
     } catch (e) {
       throw Exception(e.toString());
     }

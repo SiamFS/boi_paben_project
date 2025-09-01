@@ -398,7 +398,7 @@ class _SellBookScreenState extends State<SellBookScreen> {
               
               // Submit Button
               SizedBox(
-                height: 56,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: _isUploading ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
@@ -407,7 +407,7 @@ class _SellBookScreenState extends State<SellBookScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 3,
+                    elevation: 2,
                   ),
                   child: _isUploading
                       ? Row(

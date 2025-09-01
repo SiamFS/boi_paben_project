@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import '../models/cart_model.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/cart_viewmodel.dart';
+import '../viewmodels/book_viewmodel.dart';
 import '../utils/app_theme.dart';
 import '../utils/routes.dart';
+import 'cod_checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -401,19 +403,40 @@ class _CartScreenState extends State<CartScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {
-                              _showCheckoutDialog(context, cart, auth, totalWithDelivery, deliveryFee);
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CODCheckoutScreen(
+                                    cartItems: cart.cartItems,
+                                    subtotal: cart.subtotal,
+                                    deliveryFee: deliveryFee,
+                                    total: totalWithDelivery,
+                                    deliveryCity: _deliveryCity,
+                                  ),
+                                ),
+                              );
+                              
+                              // Refresh cart and book data when returning
+                              if (result != null) {
+                                final auth = Provider.of<AuthViewModel>(context, listen: false);
+                                final bookViewModel = Provider.of<BookViewModel>(context, listen: false);
+                                
+                                cart.loadCartItems(auth.user!.uid);
+                                await bookViewModel.forceRefresh();
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryOrange,
                               foregroundColor: AppColors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
+                              elevation: 2,
                             ),
                             child: Text(
-                              'Proceed to Checkout',
+                              'Proceed to COD Checkout',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -453,85 +476,6 @@ class _CartScreenState extends State<CartScreen> {
               'Remove',
               style: TextStyle(color: AppColors.red),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showCheckoutDialog(BuildContext context, CartViewModel cart, AuthViewModel auth, double total, double deliveryFee) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Confirm Book Trade Order'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Trade Order Summary:'),
-            const SizedBox(height: 8),
-            Text('Books: ${cart.cartCount}'),
-            Text('Subtotal: ৳${cart.subtotal.toStringAsFixed(0)}'),
-            Text('Delivery: ৳${deliveryFee.toStringAsFixed(0)}'),
-            Text('Total: ৳${total.toStringAsFixed(0)}'),
-            const SizedBox(height: 16),
-            Text(
-              'This will place your book trade order. Continue?',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              
-              final order = Order(
-                id: '', // Will be set by Firestore
-                userId: auth.user!.uid,
-                items: cart.cartItems,
-                subtotal: cart.subtotal,
-                deliveryFee: deliveryFee,
-                total: total,
-                deliveryAddress: 'Address will be collected during delivery',
-                city: _deliveryCity,
-                paymentMethod: 'Cash on Delivery',
-                orderDate: DateTime.now(),
-                status: 'pending',
-              );
-              
-              final orderId = await cart.placeOrder(order);
-              
-              if (orderId != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Book trade order placed successfully!'),
-                    backgroundColor: AppColors.green,
-                  ),
-                );
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoutes.home,
-                  (route) => false,
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to place order. Please try again.'),
-                    backgroundColor: AppColors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryOrange,
-              foregroundColor: AppColors.white,
-            ),
-            child: Text('Place Trade Order'),
           ),
         ],
       ),

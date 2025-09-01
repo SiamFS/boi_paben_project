@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/book_model.dart';
-import '../models/cart_model.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/book_viewmodel.dart';
 import '../viewmodels/cart_viewmodel.dart';
 import '../utils/app_theme.dart';
 import '../utils/routes.dart';
+import '../widgets/app_drawer.dart';
+import '../widgets/search_bar_widget.dart';
+import '../widgets/book_cart_button.dart';
 import '../widgets/book_details_modal.dart';
 
 class ShopScreen extends StatefulWidget {
@@ -18,13 +20,12 @@ class ShopScreen extends StatefulWidget {
 }
 
 class _ShopScreenState extends State<ShopScreen> {
+  final GlobalKey<SearchBarWidgetState> _searchBarKey = GlobalKey<SearchBarWidgetState>();
+  List<Book> _filteredBooks = [];
+  bool _isSearching = false;
   String _selectedCategory = 'All';
-  String _sortBy = 'Latest'; // Latest, Price Low to High, Price High to Low, A-Z, Z-A
-  String _searchQuery = '';
+  String _sortBy = 'Latest';
   
-  final TextEditingController _searchController = TextEditingController();
-  
-  // Available categories - you can expand this based on your data
   final List<String> _categories = [
     'All',
     'Fiction',
@@ -60,44 +61,33 @@ class _ShopScreenState extends State<ShopScreen> {
     });
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void _onSearchUpdate(List<Book> filteredBooks, bool isSearching, String query) {
+    setState(() {
+      _filteredBooks = filteredBooks;
+      _isSearching = isSearching;
+    });
   }
 
-  List<Book> _filterAndSortBooks(List<Book> books) {
+  void _toggleSearch() {
+    _searchBarKey.currentState?.toggleSearch();
+  }
+
+  List<Book> _getFilteredAndSortedBooks(List<Book> books) {
     List<Book> filteredBooks = books;
-    
-    // Filter by search query
-    if (_searchQuery.isNotEmpty) {
-      filteredBooks = filteredBooks.where((book) {
-        return book.bookTitle.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               book.authorName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               book.category.toLowerCase().contains(_searchQuery.toLowerCase());
-      }).toList();
-    }
     
     // Filter by category
     if (_selectedCategory != 'All') {
-      filteredBooks = filteredBooks.where((book) {
-        return book.category.toLowerCase() == _selectedCategory.toLowerCase();
-      }).toList();
+      filteredBooks = filteredBooks.where((book) => 
+        book.category.toLowerCase() == _selectedCategory.toLowerCase()).toList();
     }
     
     // Sort books
     switch (_sortBy) {
-      case 'Latest':
-        // Assuming newer books have higher indices or you can add a timestamp field
-        filteredBooks = filteredBooks.reversed.toList();
-        break;
       case 'Price Low to High':
-        filteredBooks.sort((a, b) => 
-          (double.tryParse(a.price) ?? 0).compareTo(double.tryParse(b.price) ?? 0));
+        filteredBooks.sort((a, b) => (double.tryParse(a.price) ?? 0).compareTo(double.tryParse(b.price) ?? 0));
         break;
       case 'Price High to Low':
-        filteredBooks.sort((a, b) => 
-          (double.tryParse(b.price) ?? 0).compareTo(double.tryParse(a.price) ?? 0));
+        filteredBooks.sort((a, b) => (double.tryParse(b.price) ?? 0).compareTo(double.tryParse(a.price) ?? 0));
         break;
       case 'A-Z':
         filteredBooks.sort((a, b) => a.bookTitle.compareTo(b.bookTitle));
@@ -114,309 +104,322 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Shop',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(Icons.menu, color: AppColors.white),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.storefront, color: AppColors.white, size: 24),
+            SizedBox(width: 8),
+            Text(
+              'Shop',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
         backgroundColor: AppColors.primaryOrange,
         foregroundColor: AppColors.white,
-        elevation: 0,
         actions: [
-          Consumer<CartViewModel>(
-            builder: (context, cart, child) {
-              return GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, AppRoutes.cart);
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(right: 16),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.shopping_cart_outlined, size: 18, color: AppColors.white),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${cart.cartCount}',
-                        style: GoogleFonts.poppins(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: _toggleSearch,
+          ),
+          Consumer<AuthViewModel>(
+            builder: (context, auth, child) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        auth.isAuthenticated ? Icons.account_circle : Icons.login,
+                        color: AppColors.white,
                       ),
-                    ],
-                  ),
+                      onPressed: () {
+                        if (auth.isAuthenticated) {
+                          // Show profile options
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (context) => Container(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    leading: Icon(Icons.person),
+                                    title: Text('Profile'),
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      // Navigate to profile
+                                    },
+                                  ),
+                                  ListTile(
+                                    leading: Icon(Icons.logout),
+                                    title: Text('Logout'),
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      auth.signOut();
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        } else {
+                          Navigator.pushNamed(context, AppRoutes.login);
+                        }
+                      },
+                    ),
+                    Consumer<CartViewModel>(
+                      builder: (context, cart, child) {
+                        return Stack(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.shopping_cart_outlined, color: AppColors.white),
+                              onPressed: () {
+                                Navigator.pushNamed(context, AppRoutes.cart);
+                              },
+                            ),
+                            if (cart.cartCount > 0)
+                              Positioned(
+                                right: 8,
+                                top: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.red,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    '${cart.cartCount}',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
                 ),
               );
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Search and Filter Section
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: AppColors.lightGray,
-            child: Column(
-              children: [
-                // Search Bar
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search books, authors, categories...',
-                    prefixIcon: Icon(Icons.search),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {
-                                _searchQuery = '';
-                              });
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+      drawer: const AppDrawer(),
+      body: Consumer<BookViewModel>(
+        builder: (context, bookViewModel, child) {
+          if (bookViewModel.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryOrange,
+              ),
+            );
+          }
+
+          if (bookViewModel.errorMessage?.isNotEmpty == true) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: AppColors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error loading books',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.red,
                     ),
-                    filled: true,
-                    fillColor: AppColors.white,
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
+                  const SizedBox(height: 8),
+                  Text(
+                    bookViewModel.errorMessage!,
+                    style: GoogleFonts.poppins(fontSize: 14, color: AppColors.textGray),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => bookViewModel.fetchBooks(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryOrange,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text('Retry', style: GoogleFonts.poppins()),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final books = bookViewModel.availableBooks;
+          
+          if (books.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.book_outlined, size: 64, color: AppColors.textGray),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No books available',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textGray,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              SearchBarWidget(
+                key: _searchBarKey,
+                books: books,
+                onSearchUpdate: _onSearchUpdate,
+              ),
+              // Filter Section
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.lightGray,
+                  border: Border(
+                    bottom: BorderSide(color: AppColors.textGray.withValues(alpha: 0.3)),
+                  ),
                 ),
-                const SizedBox(height: 16),
-                
-                // Category and Sort Row
-                Row(
+                child: Row(
                   children: [
-                    // Category Filter
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Category',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          DropdownButtonFormField<String>(
-                            value: _selectedCategory,
-                            isDense: true,
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 6,
-                              ),
-                              filled: true,
-                              fillColor: AppColors.white,
-                            ),
-                            items: _categories.map((category) {
-                              return DropdownMenuItem(
-                                value: category,
-                                child: Text(
-                                  category,
-                                  style: GoogleFonts.poppins(fontSize: 13),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedCategory = value ?? 'All';
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    
-                    // Sort Filter
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Sort By',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          DropdownButtonFormField<String>(
-                            value: _sortBy,
-                            isDense: true,
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 6,
-                              ),
-                              filled: true,
-                              fillColor: AppColors.white,
-                            ),
-                            items: _sortOptions.map((option) {
-                              return DropdownMenuItem(
-                                value: option,
-                                child: Text(
-                                  option,
-                                  style: GoogleFonts.poppins(fontSize: 13),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _sortBy = value ?? 'Latest';
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
+                    Expanded(child: _buildCategoryFilter()),
+                    const SizedBox(width: 16),
+                    _buildSortDropdown(),
                   ],
                 ),
-              ],
+              ),
+              Expanded(
+                child: _buildBookGrid(),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.textGray.withValues(alpha: 0.3)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedCategory,
+          icon: Icon(Icons.arrow_drop_down, color: AppColors.primaryOrange),
+          style: GoogleFonts.poppins(color: AppColors.darkGray, fontSize: 14),
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedCategory = newValue!;
+            });
+          },
+          items: _categories.map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.textGray.withValues(alpha: 0.3)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _sortBy,
+          icon: Icon(Icons.sort, color: AppColors.primaryOrange),
+          style: GoogleFonts.poppins(color: AppColors.darkGray, fontSize: 14),
+          onChanged: (String? newValue) {
+            setState(() {
+              _sortBy = newValue!;
+            });
+          },
+          items: _sortOptions.map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value, style: GoogleFonts.poppins(fontSize: 12)),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBookGrid() {
+    final booksToShow = _isSearching ? _filteredBooks : _getFilteredAndSortedBooks(
+      Provider.of<BookViewModel>(context, listen: false).availableBooks
+    );
+
+    if (booksToShow.isEmpty && _isSearching) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 64, color: AppColors.textGray),
+            const SizedBox(height: 16),
+            Text(
+              'No books found',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textGray,
+              ),
             ),
-          ),
-          
-          // Books Grid
-          Expanded(
-            child: Consumer<BookViewModel>(
-              builder: (context, bookViewModel, child) {
-                if (bookViewModel.isLoading) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text('Loading books...'),
-                      ],
-                    ),
-                  );
-                }
-                
-                if (bookViewModel.errorMessage != null) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.red,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'Error loading books',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Please check your internet connection',
-                          style: GoogleFonts.poppins(fontSize: 14),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            bookViewModel.clearError();
-                            bookViewModel.fetchBooks();
-                          },
-                          child: Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                
-                final filteredBooks = _filterAndSortBooks(bookViewModel.books);
-                
-                if (filteredBooks.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _searchQuery.isNotEmpty || _selectedCategory != 'All'
-                              ? Icons.search_off
-                              : Icons.book_outlined,
-                          size: 64,
-                          color: AppColors.textGray,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          _searchQuery.isNotEmpty || _selectedCategory != 'All'
-                              ? 'No books found'
-                              : 'No books available',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textGray,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          _searchQuery.isNotEmpty || _selectedCategory != 'All'
-                              ? 'Try different search criteria'
-                              : 'Be the first to sell a book!',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: AppColors.textGray,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    await bookViewModel.fetchBooks();
-                  },
-                  child: GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
-                      childAspectRatio: 0.65,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: filteredBooks.length,
-                    itemBuilder: (context, index) {
-                      final book = filteredBooks[index];
-                      return _buildBookCard(book);
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.7,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: booksToShow.length,
+        itemBuilder: (context, index) {
+          final book = booksToShow[index];
+          return _buildBookCard(book);
+        },
       ),
     );
   }
@@ -425,9 +428,7 @@ class _ShopScreenState extends State<ShopScreen> {
     return Card(
       elevation: 4,
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -436,14 +437,10 @@ class _ShopScreenState extends State<ShopScreen> {
             child: Stack(
               children: [
                 GestureDetector(
-                  onTap: () {
-                    BookDetailsModal.show(context, book);
-                  },
+                  onTap: () => BookDetailsModal.show(context, book),
                   child: Container(
                     width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.lightGray,
-                    ),
+                    decoration: BoxDecoration(color: AppColors.lightGray),
                     child: Image.network(
                       book.imageURL,
                       fit: BoxFit.cover,
@@ -452,109 +449,14 @@ class _ShopScreenState extends State<ShopScreen> {
                     ),
                   ),
                 ),
-                // Cart button overlay
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Consumer<CartViewModel>(
-                    builder: (context, cart, child) {
-                      return Consumer<AuthViewModel>(
-                        builder: (context, auth, child) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              onPressed: () async {
-                                if (!auth.isAuthenticated) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Please log in to add items to cart'),
-                                      backgroundColor: AppColors.red,
-                                    ),
-                                  );
-                                  Navigator.pushNamed(context, AppRoutes.login);
-                                  return;
-                                }
-                                
-                                // Check if book is already in cart
-                                final isAlreadyInCart = cart.cartItems.any((item) => item.bookId == book.id);
-                                
-                                if (isAlreadyInCart) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Book "${book.bookTitle}" is already in your cart'),
-                                      backgroundColor: AppColors.primaryOrange,
-                                    ),
-                                  );
-                                  return;
-                                }
-                                
-                                // Create CartItem and add to cart
-                                final cartItem = CartItem(
-                                  id: '', // Will be set by Firestore
-                                  bookId: book.id ?? '',
-                                  bookTitle: book.bookTitle,
-                                  authorName: book.authorName,
-                                  category: book.category,
-                                  price: double.tryParse(book.price) ?? 0.0,
-                                  imageUrl: book.imageURL,
-                                  description: book.bookDescription,
-                                  userId: auth.user!.uid,
-                                  addedAt: DateTime.now(),
-                                  quantity: 1,
-                                );
-                                
-                                final success = await cart.addToCart(cartItem);
-                                
-                                if (success) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Added "${book.bookTitle}" to cart'),
-                                      backgroundColor: AppColors.green,
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Failed to add item to cart'),
-                                      backgroundColor: AppColors.red,
-                                    ),
-                                  );
-                                }
-                              },
-                              icon: Icon(
-                                Icons.add_shopping_cart,
-                                color: AppColors.primaryOrange,
-                                size: 20,
-                              ),
-                              constraints: BoxConstraints.tightFor(
-                                width: 36,
-                                height: 36,
-                              ),
-                              padding: EdgeInsets.zero,
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
+                BookCartButton(book: book),
               ],
             ),
           ),
           Expanded(
             flex: 2,
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -562,49 +464,49 @@ class _ShopScreenState extends State<ShopScreen> {
                     book.bookTitle,
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 12,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     'by ${book.authorName}',
                     style: GoogleFonts.poppins(
-                      fontSize: 12,
+                      fontSize: 10,
                       color: AppColors.textGray,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryOrange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      book.category,
+                      style: GoogleFonts.poppins(
+                        fontSize: 9,
+                        color: AppColors.primaryOrange,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   const Spacer(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '৳${book.price}',
-                        style: GoogleFonts.poppins(
-                          color: AppColors.primaryOrange,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryOrange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          book.category,
-                          style: GoogleFonts.poppins(
-                            color: AppColors.primaryOrange,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    '৳${book.price}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryOrange,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

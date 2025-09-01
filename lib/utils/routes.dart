@@ -8,6 +8,8 @@ import '../views/edit_book_screen.dart';
 import '../views/create_post_screen.dart';
 import '../views/cart_screen.dart';
 import '../views/shop_screen.dart';
+import '../views/purchase_history_screen.dart';
+import '../views/seller_dashboard_screen.dart';
 import '../widgets/floating_tab_capsule.dart';
 import '../models/book_model.dart';
 
@@ -22,6 +24,8 @@ class AppRoutes {
   static const String createPost = '/create-post';
   static const String cart = '/cart';
   static const String shop = '/shop';
+  static const String purchaseHistory = '/purchase-history';
+  static const String sellerDashboard = '/seller-dashboard';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
@@ -55,6 +59,10 @@ class AppRoutes {
         return MaterialPageRoute(builder: (context) => const CartScreen());
       case shop:
         return MaterialPageRoute(builder: (context) => const ShopScreen());
+      case purchaseHistory:
+        return MaterialPageRoute(builder: (context) => const PurchaseHistoryScreen());
+      case sellerDashboard:
+        return MaterialPageRoute(builder: (context) => const SellerDashboardScreen());
       case editBook:
         final book = settings.arguments as Book?;
         return MaterialPageRoute(

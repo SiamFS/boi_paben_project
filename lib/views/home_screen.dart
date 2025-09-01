@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/book_model.dart';
-import '../models/cart_model.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/book_viewmodel.dart';
 import '../viewmodels/cart_viewmodel.dart';
@@ -11,6 +10,7 @@ import '../utils/routes.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/search_bar_widget.dart';
 import '../widgets/book_details_modal.dart';
+import '../widgets/book_cart_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -174,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
             builder: (context, bookViewModel, child) {
               return SearchBarWidget(
                 key: _searchBarKey,
-                books: bookViewModel.books,
+                books: bookViewModel.availableBooks,
                 onSearchUpdate: _onSearchUpdate,
               );
             },
@@ -347,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
                 
-                final filteredBooks = _filteredBooks.isNotEmpty || _isSearching ? _filteredBooks : bookViewModel.books;
+                final filteredBooks = _filteredBooks.isNotEmpty || _isSearching ? _filteredBooks : bookViewModel.availableBooks;
                 
                 if (filteredBooks.isEmpty && _searchQuery.isNotEmpty) {
                   return Center(
@@ -377,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
                 
-                if (bookViewModel.books.isEmpty) {
+                if (bookViewModel.availableBooks.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -496,101 +496,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                         ),
                                         // Cart button overlay
-                                        Positioned(
-                                          top: 8,
-                                          right: 8,
-                                          child: Consumer<CartViewModel>(
-                                      builder: (context, cart, child) {
-                                        return Consumer<AuthViewModel>(
-                                          builder: (context, auth, child) {
-                                            return Container(
-                                              decoration: BoxDecoration(
-                                                color: AppColors.white,
-                                                shape: BoxShape.circle,
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black.withValues(alpha: 0.1),
-                                                    blurRadius: 4,
-                                                    offset: Offset(0, 2),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: IconButton(
-                                                onPressed: () async {
-                                                  if (!auth.isAuthenticated) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text('Please log in to add items to cart'),
-                                                        backgroundColor: AppColors.red,
-                                                      ),
-                                                    );
-                                                    Navigator.pushNamed(context, AppRoutes.login);
-                                                    return;
-                                                  }
-                                                  
-                                                  // Check if book is already in cart
-                                                  final isAlreadyInCart = cart.cartItems.any((item) => item.bookId == book.id);
-                                                  
-                                                  if (isAlreadyInCart) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(
-                                                        content: Text('Book "${book.bookTitle}" is already in your cart'),
-                                                        backgroundColor: AppColors.primaryOrange,
-                                                      ),
-                                                    );
-                                                    return;
-                                                  }
-                                                  
-                                                  // Create CartItem and add to cart
-                                                  final cartItem = CartItem(
-                                                    id: '', // Will be set by Firestore
-                                                    bookId: book.id ?? '',
-                                                    bookTitle: book.bookTitle,
-                                                    authorName: book.authorName,
-                                                    category: book.category,
-                                                    price: double.tryParse(book.price) ?? 0.0,
-                                                    imageUrl: book.imageURL,
-                                                    description: book.bookDescription,
-                                                    userId: auth.user?.uid ?? '',
-                                                    addedAt: DateTime.now(),
-                                                    quantity: 1,
-                                                  );
-                                                  
-                                                  final success = await cart.addToCart(cartItem);
-                                                  
-                                                  if (success) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(
-                                                        content: Text('Added "${book.bookTitle}" to cart'),
-                                                        backgroundColor: AppColors.green,
-                                                      ),
-                                                    );
-                                                  } else {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(
-                                                        content: Text('Failed to add item to cart'),
-                                                        backgroundColor: AppColors.red,
-                                                      ),
-                                                    );
-                                                  }
-                                                },
-                                                icon: Icon(
-                                                  Icons.add_shopping_cart,
-                                                  color: AppColors.primaryOrange,
-                                                  size: 20,
-                                                ),
-                                                constraints: BoxConstraints.tightFor(
-                                                  width: 36,
-                                                  height: 36,
-                                                ),
-                                                padding: EdgeInsets.zero,
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ),
+                                        BookCartButton(book: book),
                                 ],
                               ),
                             ),
@@ -618,6 +524,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryOrange.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      book.category,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 10,
+                                        color: AppColors.primaryOrange,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
                                   const SizedBox(height: 8),
                                   Text(
                                     '৳${book.price}',
@@ -626,6 +550,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),

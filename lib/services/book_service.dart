@@ -9,13 +9,58 @@ class BookService {
     try {
       final QuerySnapshot snapshot = await _firestore.collection(_collection).get();
       
-      return snapshot.docs.map((doc) {
+      final books = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['_id'] = doc.id; 
         return Book.fromJson(data);
       }).toList();
+      
+      print('BookService: Loaded ${books.length} books');
+      final availableBooks = books.where((book) => book.availability != 'sold').length;
+      print('BookService: $availableBooks available books');
+      
+      return books;
     } catch (e) {
+      print('BookService error: $e');
       throw Exception('Failed to load books: $e');
+    }
+  }
+
+  // Get books as a stream for real-time updates
+  Stream<List<Book>> getBooksStream() {
+    return _firestore
+        .collection(_collection)
+        .snapshots()
+        .map((snapshot) {
+          final books = snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['_id'] = doc.id;
+            return Book.fromJson(data);
+          }).toList();
+          
+          print('BookService Stream: Loaded ${books.length} books');
+          return books;
+        });
+  }
+
+  // Get only available books (not sold)
+  Future<List<Book>> getAvailableBooks() async {
+    try {
+      final QuerySnapshot snapshot = await _firestore
+          .collection(_collection)
+          .get();
+      
+      final books = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['_id'] = doc.id; 
+        return Book.fromJson(data);
+      }).where((book) => book.availability != 'sold').toList();
+      
+      print('BookService: Found ${books.length} available books');
+      return books;
+    } catch (e) {
+      print('BookService getAvailableBooks error: $e');
+      throw Exception('Failed to load available books: $e');
     }
   }
 
@@ -95,6 +140,20 @@ class BookService {
       });
     } catch (e) {
       throw Exception('Failed to update book availability: $e');
+    }
+  }
+
+  // Check if book is available
+  Future<bool> isBookAvailable(String bookId) async {
+    try {
+      final doc = await _firestore.collection(_collection).doc(bookId).get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        return data['availability'] != 'sold';
+      }
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 }

@@ -5,6 +5,7 @@ import '../viewmodels/auth_viewmodel.dart';
 import '../utils/app_theme.dart';
 import '../utils/routes.dart';
 import '../utils/validators.dart';
+import '../utils/app_snackbar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -172,32 +173,36 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   const SizedBox(height: 24),
                   
-                  // Error message
+                  // Error message with improved styling
                   Consumer<AuthViewModel>(
                     builder: (context, authViewModel, child) {
                       if (authViewModel.errorMessage != null) {
                         return Container(
                           margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: AppColors.red.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.red.withValues(alpha: 0.3)),
+                            color: AppColors.red.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppColors.red.withValues(alpha: 0.2),
+                              width: 1,
+                            ),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.error_outline,
                                 color: AppColors.red,
-                                size: 20,
+                                size: 18,
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   authViewModel.errorMessage!,
                                   style: GoogleFonts.poppins(
                                     color: AppColors.red,
-                                    fontSize: 14,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ),
@@ -214,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     builder: (context, authViewModel, child) {
                       return SizedBox(
                         width: double.infinity,
-                        height: 50,
+                        height: 48,
                         child: ElevatedButton(
                           onPressed: authViewModel.isLoading ? null : _signIn,
                           style: ElevatedButton.styleFrom(
@@ -223,11 +228,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
+                            elevation: 2,
                           ),
                           child: authViewModel.isLoading
                               ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
+                                  height: 18,
+                                  width: 18,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
@@ -345,9 +351,15 @@ class _LoginScreenState extends State<LoginScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
             child: Text(
               'Cancel',
-              style: GoogleFonts.poppins(color: AppColors.textGray),
+              style: GoogleFonts.poppins(
+                color: AppColors.textGray,
+                fontSize: 14,
+              ),
             ),
           ),
           Consumer<AuthViewModel>(
@@ -359,49 +371,60 @@ class _LoginScreenState extends State<LoginScreen> {
                         final email = emailController.text.trim();
                         if (email.isNotEmpty) {
                           if (!EmailValidator.isValidEmailFormat(email)) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Please enter a valid email address'),
-                                backgroundColor: AppColors.red,
-                              ),
-                            );
+                            if (context.mounted) {
+                              AppSnackBar.showError(
+                                context,
+                                'Please enter a valid email address',
+                              );
+                            }
                             return;
                           }
                           
                           final success = await authViewModel.resetPassword(email);
                           if (success && context.mounted) {
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Password reset email sent!',
-                                  style: GoogleFonts.poppins(),
-                                ),
-                                backgroundColor: AppColors.green,
-                              ),
+                            AppSnackBar.showSuccess(
+                              context,
+                              'Password reset email sent successfully!',
+                              duration: const Duration(seconds: 4),
+                            );
+                          } else if (context.mounted && authViewModel.errorMessage != null) {
+                            AppSnackBar.showError(
+                              context,
+                              authViewModel.errorMessage!,
+                              duration: const Duration(seconds: 4),
                             );
                           }
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please enter your email address'),
-                              backgroundColor: AppColors.red,
-                            ),
-                          );
+                          if (context.mounted) {
+                            AppSnackBar.showError(
+                              context,
+                              'Please enter your email address',
+                            );
+                          }
                         }
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryOrange,
+                  foregroundColor: AppColors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  elevation: 2,
                 ),
                 child: authViewModel.isLoading
                     ? const SizedBox(
                         height: 16,
                         width: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
                       )
                     : Text(
                         'Send Reset Link',
-                        style: GoogleFonts.poppins(),
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
               );
             },

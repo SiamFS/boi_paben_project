@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/cart_model.dart';
 import '../services/cart_service.dart';
+import '../services/payment_service.dart';
 
 class CartViewModel extends ChangeNotifier {
   final CartService _cartService = CartService();
@@ -212,6 +213,19 @@ class CartViewModel extends ChangeNotifier {
     }
   }
   
+  // Check if items in cart are still available
+  Future<Map<String, bool>> checkCartAvailability() async {
+    final paymentService = PaymentService();
+    final bookIds = _cartItems.map((item) => item.bookId).toList();
+    return await paymentService.checkBooksAvailability(bookIds);
+  }
+
+  // Remove unavailable items from cart
+  Future<bool> removeUnavailableItems(String userId, List<String> unavailableBookIds) async {
+    final paymentService = PaymentService();
+    return await paymentService.removeUnavailableFromCart(userId, unavailableBookIds);
+  }
+
   // Helper methods
   void _setLoading(bool loading) {
     _isLoading = loading;
