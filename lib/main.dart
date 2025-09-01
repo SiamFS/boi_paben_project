@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/book_viewmodel.dart';
+import 'viewmodels/blog_viewmodel.dart';
+import 'viewmodels/cart_viewmodel.dart';
+import 'viewmodels/payment_viewmodel.dart';
 import 'utils/app_theme.dart';
 import 'utils/routes.dart';
 
@@ -24,6 +27,9 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => BookViewModel()),
+        ChangeNotifierProvider(create: (_) => BlogViewModel()),
+        ChangeNotifierProvider(create: (_) => CartViewModel()),
+        ChangeNotifierProvider(create: (_) => PaymentViewModel()),
       ],
       child: MaterialApp(
         title: 'BoiPaben',

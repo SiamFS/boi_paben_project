@@ -4,9 +4,12 @@ import 'package:provider/provider.dart';
 import '../models/book_model.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/book_viewmodel.dart';
+import '../viewmodels/cart_viewmodel.dart';
 import '../utils/app_theme.dart';
 import '../utils/routes.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/search_bar_widget.dart';
+import '../widgets/book_card_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,36 +18,52 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  final GlobalKey<SearchBarWidgetState> _searchBarKey = GlobalKey<SearchBarWidgetState>();
+  List<Book> _filteredBooks = [];
   bool _isSearching = false;
   String _searchQuery = '';
-  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<BookViewModel>(context, listen: false).fetchBooks();
+      
+      // Load cart items if user is authenticated
+      final auth = Provider.of<AuthViewModel>(context, listen: false);
+      if (auth.isAuthenticated && auth.user != null) {
+        Provider.of<CartViewModel>(context, listen: false).loadCartItems(auth.user!.uid);
+      }
     });
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  List<Book> _getFilteredBooks(List<Book> books) {
-    if (_searchQuery.isEmpty) return books;
-    
-    return books.where((book) {
-      final query = _searchQuery.toLowerCase();
-      return book.bookTitle.toLowerCase().contains(query) ||
-             book.authorName.toLowerCase().contains(query) ||
-             book.category.toLowerCase().contains(query) ||
-             book.bookDescription.toLowerCase().contains(query) ||
-             (book.publisher?.toLowerCase().contains(query) ?? false);
-    }).toList();
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh books when app comes back to foreground
+    if (state == AppLifecycleState.resumed) {
+      Provider.of<BookViewModel>(context, listen: false).fetchBooks();
+    }
+  }
+
+  void _onSearchUpdate(List<Book> filteredBooks, bool isSearching, String query) {
+    setState(() {
+      _filteredBooks = filteredBooks;
+      _isSearching = isSearching;
+      _searchQuery = query;
+    });
+  }
+
+  void _toggleSearch() {
+    _searchBarKey.currentState?.toggleSearch();
   }
 
   @override
@@ -82,15 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                _isSearching = !_isSearching;
-                if (!_isSearching) {
-                  _searchController.clear();
-                  _searchQuery = '';
-                }
-              });
-            },
+            onPressed: _toggleSearch,
           ),
           Consumer<AuthViewModel>(
             builder: (context, auth, child) {
@@ -131,27 +142,37 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.shopping_cart_outlined, size: 18, color: AppColors.white),
-                          const SizedBox(width: 4),
-                          Text(
-                            '0',
-                            style: GoogleFonts.poppins(
-                              color: AppColors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                    Consumer<CartViewModel>(
+                      builder: (context, cart, child) {
+                        return GestureDetector(
+                          onTap: () {
+                            // Navigate to cart page
+                            Navigator.pushNamed(context, AppRoutes.cart);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.shopping_cart_outlined, size: 18, color: AppColors.white),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${cart.cartCount}',
+                                  style: GoogleFonts.poppins(
+                                    color: AppColors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -163,66 +184,15 @@ class _HomeScreenState extends State<HomeScreen> {
       drawer: const AppDrawer(),
       body: Column(
         children: [
-          // Search Bar (appears when searching)
-          AnimatedContainer(
-            duration: Duration(milliseconds: 300),
-            height: _isSearching ? 60 : 0,
-            color: AppColors.primaryOrange,
-            child: _isSearching 
-              ? Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withValues(alpha: 0.2),
-                          spreadRadius: 1,
-                          blurRadius: 3,
-                          offset: Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: 'Search by book title, author, category...',
-                        hintStyle: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 16,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: AppColors.primaryOrange,
-                        ),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(Icons.clear, color: Colors.grey),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() {
-                                    _searchQuery = '';
-                                  });
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                        });
-                      },
-                    ),
-                  ),
-                )
-              : SizedBox.shrink(),
+          // Search Bar Widget
+          Consumer<BookViewModel>(
+            builder: (context, bookViewModel, child) {
+              return SearchBarWidget(
+                key: _searchBarKey,
+                books: bookViewModel.availableBooks,
+                onSearchUpdate: _onSearchUpdate,
+              );
+            },
           ),
           // Hero Section (hide when searching)
           if (!_isSearching)
@@ -292,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            // Scroll to books section
+                            Navigator.pushNamed(context, AppRoutes.shop);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryOrange,
@@ -392,7 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
                 
-                final filteredBooks = _getFilteredBooks(bookViewModel.books);
+                final filteredBooks = _filteredBooks.isNotEmpty || _isSearching ? _filteredBooks : bookViewModel.availableBooks;
                 
                 if (filteredBooks.isEmpty && _searchQuery.isNotEmpty) {
                   return Center(
@@ -422,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
                 
-                if (bookViewModel.books.isEmpty) {
+                if (bookViewModel.availableBooks.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -454,70 +424,41 @@ class _HomeScreenState extends State<HomeScreen> {
                   onRefresh: () async {
                     await bookViewModel.fetchBooks();
                   },
-                  child: GridView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.7,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: filteredBooks.length,
-                    itemBuilder: (context, index) {
-                      final book = filteredBooks[index];
-                      return Card(
-                        elevation: 4,
-                        clipBehavior: Clip.antiAlias,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Column(
+                    children: [
+                      // Latest Books Header
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Expanded(
-                              child: Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: AppColors.lightGray,
-                                ),
-                                child: Image.network(
-                                  book.imageURL,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.broken_image, size: 50),
-                                ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryOrange,
+                                borderRadius: BorderRadius.circular(25),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primaryOrange.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    book.bookTitle,
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
+                                  const Icon(
+                                    Icons.auto_stories,
+                                    color: Colors.white,
+                                    size: 20,
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    'by ${book.authorName}',
+                                    'Latest Books',
                                     style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: AppColors.textGray,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    '৳${book.price}',
-                                    style: GoogleFonts.poppins(
-                                      color: AppColors.primaryOrange,
-                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
                                       fontSize: 16,
                                     ),
                                   ),
@@ -526,9 +467,29 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
-                      );
-                    },
+                      ),
+                      // Books Grid
+                      Expanded(
+                        child: GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.7,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                          itemCount: filteredBooks.length,
+                          itemBuilder: (context, index) {
+                            final book = filteredBooks[index];
+                            return BookCardWidget(
+                              book: book,
+                              showCartButton: true,
+                            );
+                          },
                   ),
+                        ),
+                      ],
+                    ),
                 );
               },
             ),

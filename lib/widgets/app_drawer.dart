@@ -34,7 +34,7 @@ class AppDrawer extends StatelessWidget {
                     const SizedBox(height: 8),
                     if (authViewModel.isAuthenticated)
                       Text(
-                        'Welcome, ${authViewModel.user?.email ?? 'User'}',
+                        'Welcome, ${authViewModel.user?.displayName ?? 'User'}',
                         style: GoogleFonts.poppins(
                           color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 14,
@@ -64,6 +64,22 @@ class AppDrawer extends StatelessWidget {
                 },
               ),
               ListTile(
+                leading: const Icon(Icons.storefront_outlined),
+                title: Text('Shop', style: GoogleFonts.poppins()),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.shop);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.article_outlined),
+                title: Text('Book Blog Community', style: GoogleFonts.poppins()),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.blog);
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.sell_outlined),
                 title: Text('Sell Your Books', style: GoogleFonts.poppins()),
                 onTap: () {
@@ -82,6 +98,26 @@ class AppDrawer extends StatelessWidget {
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, AppRoutes.manageBooks);
+                  },
+                ),
+              if (authViewModel.isAuthenticated)
+                const Divider(),
+              if (authViewModel.isAuthenticated)
+                ListTile(
+                  leading: const Icon(Icons.receipt_long_outlined),
+                  title: Text('Purchase History', style: GoogleFonts.poppins()),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, AppRoutes.purchaseHistory);
+                  },
+                ),
+              if (authViewModel.isAuthenticated)
+                ListTile(
+                  leading: const Icon(Icons.dashboard_outlined),
+                  title: Text('Dashboard', style: GoogleFonts.poppins()),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, AppRoutes.sellerDashboard);
                   },
                 ),
               const Divider(),

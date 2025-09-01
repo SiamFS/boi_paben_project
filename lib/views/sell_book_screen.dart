@@ -7,6 +7,7 @@ import '../models/book_model.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/book_viewmodel.dart';
 import '../utils/app_theme.dart';
+import '../utils/validators.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SellBookScreen extends StatefulWidget {
@@ -98,11 +99,66 @@ class _SellBookScreenState extends State<SellBookScreen> {
 
   void _submitForm() async {
     if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all required fields correctly'),
+          backgroundColor: AppColors.red,
+        ),
+      );
       return;
     }
+    
     if (_imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an image for the book.')),
+        const SnackBar(
+          content: Text('Please select an image for the book'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    // Additional validation for required fields
+    if (_bookTitleController.text.trim().length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Book title must be at least 2 characters long'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_authorNameController.text.trim().length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Author name must be at least 2 characters long'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate price
+    final priceValidationResult = PriceValidator.validate(_priceController.text);
+    if (priceValidationResult != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(priceValidationResult),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate contact number
+    final contactValidationResult = PhoneValidator.validate(_contactNumberController.text);
+    if (contactValidationResult != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(contactValidationResult),
+          backgroundColor: AppColors.red,
+        ),
       );
       return;
     }
@@ -110,32 +166,40 @@ class _SellBookScreenState extends State<SellBookScreen> {
     setState(() {
       _isUploading = true;
     });
+    
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
     final bookViewModel = Provider.of<BookViewModel>(context, listen: false);
 
     try {
-
       final String? imageUrl = await _uploadImageToCloudinary(_imageFile!);
 
       if (imageUrl == null) {
- 
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to upload image. Please try again.'),
+              backgroundColor: AppColors.red,
+            ),
+          );
+        }
         return;
       }
+      
       final newBook = Book(
-        bookTitle: _bookTitleController.text,
-        authorName: _authorNameController.text,
+        bookTitle: _bookTitleController.text.trim(),
+        authorName: _authorNameController.text.trim(),
         imageURL: imageUrl,
         category: _selectedCategory!,
-        price: _priceController.text,
-        bookDescription: _bookDescriptionController.text,
+        price: _priceController.text.trim(),
+        bookDescription: _bookDescriptionController.text.trim(),
         email: authViewModel.user?.email,
-        publisher: _publisherController.text.isEmpty ? null : _publisherController.text,
-        edition: _editionController.text.isEmpty ? null : _editionController.text,
-        streetAddress: _streetAddressController.text,
-        cityTown: _cityTownController.text,
-        district: _districtController.text,
-        zipCode: _zipCodeController.text,
-        contactNumber: _contactNumberController.text,
+        publisher: _publisherController.text.trim().isEmpty ? null : _publisherController.text.trim(),
+        edition: _editionController.text.trim().isEmpty ? null : _editionController.text.trim(),
+        streetAddress: _streetAddressController.text.trim(),
+        cityTown: _cityTownController.text.trim(),
+        district: _districtController.text.trim(),
+        zipCode: _zipCodeController.text.trim(),
+        contactNumber: _contactNumberController.text.trim(),
         authenticity: _selectedAuthenticity!,
         productCondition: _selectedCondition!,
         availability: 'available',
@@ -147,31 +211,48 @@ class _SellBookScreenState extends State<SellBookScreen> {
       if (bookViewModel.errorMessage == null) {
         if (_useAutoFill && authViewModel.autoFillEnabled) {
           await authViewModel.saveUserAddress(
-            streetAddress: _streetAddressController.text,
-            cityTown: _cityTownController.text,
-            district: _districtController.text,
-            zipCode: _zipCodeController.text,
-            contactNumber: _contactNumberController.text,
+            streetAddress: _streetAddressController.text.trim(),
+            cityTown: _cityTownController.text.trim(),
+            district: _districtController.text.trim(),
+            zipCode: _zipCodeController.text.trim(),
+            contactNumber: _contactNumberController.text.trim(),
           );
         }
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Book uploaded successfully!')),
+            const SnackBar(
+              content: Text('Book uploaded successfully!'),
+              backgroundColor: AppColors.green,
+            ),
           );
           Navigator.pop(context);
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to save book details: ${bookViewModel.errorMessage}')),
+            SnackBar(
+              content: Text('Failed to save book details: ${bookViewModel.errorMessage}'),
+              backgroundColor: AppColors.red,
+            ),
           );
         }
       }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: ${e.toString()}'),
+            backgroundColor: AppColors.red,
+          ),
+        );
+      }
     } finally {
-      setState(() {
-        _isUploading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
     }
   }
 
@@ -211,7 +292,7 @@ class _SellBookScreenState extends State<SellBookScreen> {
                       _buildTextField(_bookTitleController, 'Book Title'),
                       _buildTextField(_authorNameController, 'Author Name'),
                       _buildDropdown(_categories, 'Category', _selectedCategory, (val) => setState(() => _selectedCategory = val)),
-                      _buildTextField(_priceController, 'Price (৳)', keyboardType: TextInputType.number),
+                      _buildTextField(_priceController, 'Price (TK)', keyboardType: TextInputType.number),
                       _buildTextField(_bookDescriptionController, 'Book Description', maxLines: 3),
                       _buildTextField(_publisherController, 'Publisher'),
                       _buildTextField(_editionController, 'Edition (Optional)', isRequired: false),
@@ -317,7 +398,7 @@ class _SellBookScreenState extends State<SellBookScreen> {
               
               // Submit Button
               SizedBox(
-                height: 56,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: _isUploading ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
@@ -326,7 +407,7 @@ class _SellBookScreenState extends State<SellBookScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 3,
+                    elevation: 2,
                   ),
                   child: _isUploading
                       ? Row(
@@ -373,13 +454,38 @@ class _SellBookScreenState extends State<SellBookScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
         controller: controller,
-        decoration: InputDecoration(labelText: label),
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          filled: true,
+          fillColor: AppColors.white,
+        ),
         maxLines: maxLines,
         keyboardType: keyboardType,
         validator: (value) {
           if (isRequired && (value == null || value.isEmpty)) {
             return 'Please enter the $label';
           }
+          
+          // Specific validation for different fields
+          if (label.toLowerCase().contains('price') && value != null && value.isNotEmpty) {
+            return PriceValidator.validate(value);
+          }
+          
+          if (label.toLowerCase().contains('contact') && value != null && value.isNotEmpty) {
+            return PhoneValidator.validate(value);
+          }
+          
+          if (label.toLowerCase().contains('zip') && value != null && value.isNotEmpty) {
+            return ZipCodeValidator.validate(value);
+          }
+          
+          if (label.toLowerCase().contains('edition') && value != null && value.isNotEmpty) {
+            return EditionValidator.validate(value);
+          }
+          
           return null;
         },
       ),

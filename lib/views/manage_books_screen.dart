@@ -20,7 +20,9 @@ class _ManageBooksScreenState extends State<ManageBooksScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<BookViewModel>(context, listen: false).fetchBooks();
+      if (mounted) {
+        Provider.of<BookViewModel>(context, listen: false).fetchBooks();
+      }
     });
   }
 
@@ -98,29 +100,75 @@ class _ManageBooksScreenState extends State<ManageBooksScreen> {
                       color: Colors.grey.shade600,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.sellBook);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryOrange,
-                      foregroundColor: Colors.white,
+                  const SizedBox(height: 24),
+                  Container(
+                    width: 220,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryOrange.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: Text('Sell Your First Book', style: GoogleFonts.poppins()),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        try {
+                          Navigator.pushNamed(context, AppRoutes.sellBook);
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error navigating to sell book: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryOrange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.add_circle_outline, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Sell Your First Book',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: userBooks.length,
-            itemBuilder: (context, index) {
-              final book = userBooks[index];
-              return _buildBookCard(book, bookViewModel);
+          return RefreshIndicator(
+            onRefresh: () async {
+              await bookViewModel.fetchBooks();
             },
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: userBooks.length,
+              itemBuilder: (context, index) {
+                final book = userBooks[index];
+                return _buildBookCard(book, bookViewModel);
+              },
+            ),
           );
         },
       ),
@@ -195,7 +243,7 @@ class _ManageBooksScreenState extends State<ManageBooksScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '৳${book.price}',
+                    'TK${book.price}',
                     style: GoogleFonts.poppins(
                       color: AppColors.green,
                       fontSize: 20,
@@ -254,26 +302,27 @@ class _ManageBooksScreenState extends State<ManageBooksScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(context);
+              // Capture the ScaffoldMessenger before the async gap
+              final messenger = ScaffoldMessenger.of(context);
+              Navigator.pop(context); // Close the dialog
+              
               try {
                 await bookViewModel.deleteBook(book.id);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Book deleted successfully'),
-                      backgroundColor: AppColors.green,
-                    ),
-                  );
-                }
+                if (!mounted) return; // Check if the widget is still mounted
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Book deleted successfully'),
+                    backgroundColor: AppColors.green,
+                  ),
+                );
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to delete book: $e'),
-                      backgroundColor: AppColors.red,
-                    ),
-                  );
-                }
+                if (!mounted) return; // Check again in case of error
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to delete book: $e'),
+                    backgroundColor: AppColors.red,
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(
